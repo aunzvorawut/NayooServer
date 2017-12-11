@@ -163,7 +163,7 @@ func (this *UserController) VerifyEmailUser() {
 		this.Redirect(redirectUrl, 302)
 	}
 
-	redirectUrl := baseUrl + "?status=success&msg=Welcome to IpVampire.COM"
+	redirectUrl := baseUrl + "?status=success&msg=Welcome to nayoo.com"
 	this.Redirect(redirectUrl, 302)
 }
 
@@ -479,7 +479,7 @@ func NewAccessToken() *string {
 	// Create the Claims
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-		Issuer:    "ipvampire.com",
+		Issuer:    "nayoo.com",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	//token.Claims["time"] = time.Now().Unix()

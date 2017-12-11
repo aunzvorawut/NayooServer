@@ -117,7 +117,7 @@ func SendSubscriptionMail(username, status string) {
 	emailTpl := strings.Replace(subscribeTpl, "$user.username", username, 1)
 	emailMsg := ""
 	if status == "SUCCESS" {
-		emailMsg = "คุณชำระเงินสำเร็จ คุณสามารถรับชมได้ที่ https://ipvampire.com"
+		emailMsg = "คุณชำระเงินสำเร็จ คุณสามารถรับชมได้ที่ https://nayoo.com"
 	} else if status == "USED" {
 		emailMsg = "คุณชำระเงินไม่สำเร็จ บัตรถูกใช้งานไปแล้ว"
 	} else if status == "INVALID_PIN" {
