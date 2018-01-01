@@ -15,7 +15,7 @@ func init() {
 	beego.Router("/", &controllers.MainController{})
 
 	nsAPI := beego.NewNamespace("/v1",
-		beego.NSBefore(FilterDebug),
+		beego.NSBefore(FilterJwt , FilterDebug),
 
 		beego.NSNamespace("/api",
 			//beego.NSBefore(FilterNonce),
@@ -42,6 +42,66 @@ func init() {
 
 }
 
+var FilterJwt = func(ctx *context.Context) {
+
+	data := ctx.Request.FormValue("data")
+	token, valid := v1.IsJwtTokenValid(data)
+
+	w := ctx.ResponseWriter
+
+	beego.Debug(token)
+	beego.Debug(valid)
+
+	if token == nil && valid == false {
+
+		beego.Error("error")
+
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+		w.WriteHeader(400)
+
+		results := map[string]interface{}{
+			"Code":  400,
+			"Message":      "error",
+			"ResponseObject":        make(map[string]interface{}, 0),
+		}
+		response, _ := json.Marshal(results)
+
+		w.Write([]byte(response))
+		return
+
+	}
+
+	claims, ok := token.Claims.(*v1.DataParameter)
+	if !ok {
+		valid = false
+	}
+
+	res2B, _ := json.Marshal(claims)
+	beego.Debug(string(res2B))
+
+	if valid {
+		ctx.Input.SetData(v1.JWT_NEW_ASSIGN_VALUE, *claims)
+		return
+	} else {
+
+		beego.Error("error")
+
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+		w.WriteHeader(400)
+
+		results := map[string]interface{}{
+			"Code":  400,
+			"Message":      "error",
+			"ResponseObject":        make(map[string]interface{}, 0),
+		}
+		response, _ := json.Marshal(results)
+
+		w.Write([]byte(response))
+		return
+
+	}
+}
+
 var FilterNonce = func(ctx *context.Context) {
 
 	nonce := v1.ToString(ctx.Request.FormValue("nonce"))
@@ -49,14 +109,14 @@ var FilterNonce = func(ctx *context.Context) {
 
 	w := ctx.ResponseWriter
 	if nonce == "" || timestamp == 0 {
+		beego.Error("error")
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.WriteHeader(400)
 
 		results := map[string]interface{}{
-			"statusCode":  400,
-			"status":      "error",
-			"description": "bad request",
-			"data":        make(map[string]interface{}, 0),
+			"Code":  400,
+			"Message":      "error",
+			"ResponseObject":        make(map[string]interface{}, 0),
 		}
 
 		response, _ := json.Marshal(results)
@@ -68,15 +128,14 @@ var FilterNonce = func(ctx *context.Context) {
 	isUsed := models.IsUsedNonce(nonce)
 
 	if isUsed {
-
+		beego.Error("error")
 		beego.Error("Bad FilterNonce used")
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		w.WriteHeader(429)
+		w.WriteHeader(400)
 		results := map[string]interface{}{
-			"statusCode":  429,
-			"status":      "error",
-			"description": "duplicate request",
-			"data":        make(map[string]interface{}, 0),
+			"Code":  400,
+			"Message":      "error",
+			"ResponseObject":        make(map[string]interface{}, 0),
 		}
 		response, _ := json.Marshal(results)
 		w.Write([]byte(response))
@@ -89,14 +148,14 @@ var FilterNonce = func(ctx *context.Context) {
 		if expires-now < 0 { // check expire
 			//expired
 			beego.Error("Bad FilterNonce timed out")
+			beego.Error("error")
 			w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-			w.WriteHeader(408)
+			w.WriteHeader(400)
 
 			results := map[string]interface{}{
-				"statusCode":  408,
-				"status":      "error",
-				"description": "request timeout",
-				"data":        make(map[string]interface{}, 0),
+				"Code":  400,
+				"Message":      "error",
+				"ResponseObject":        make(map[string]interface{}, 0),
 			}
 			response, _ := json.Marshal(results)
 

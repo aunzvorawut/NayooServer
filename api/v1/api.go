@@ -99,7 +99,7 @@ func SendRegisterMail(username, token, typeStr string) {
 	baseUrl := beego.AppConfig.String("serverurl")
 	urlToken := baseUrl + "/user/verify?token=" + token
 	emailTpl := strings.Replace(emailTemplate, "$url", urlToken, 1)
-	subj := "All About Home Registration Email"
+	subj := "Nayoo Registration Email"
 	if typeStr == "resetpassword" {
 		baseUrl = beego.AppConfig.String("resetpasswdurl")
 		urlToken = baseUrl + "?token=" + token
@@ -247,13 +247,13 @@ func (this *GlobalApi) GetStringByLanguage(stringDefault, stringTh, stringEng st
 	language := this.GetString(LANGUAGE, "th")
 	result := stringDefault
 
-	if language == "th"{
+	if language == "th" {
 		if stringTh == "" {
 			result = stringDefault
 		} else {
 			result = stringTh
 		}
-	} else if language == "eng"{
+	} else if language == "eng" {
 		if stringEng == "" {
 			result = stringDefault
 		} else {
@@ -305,8 +305,6 @@ func GetSafeName(input string) string {
 //=========== LIB CONTENT JSON DOWN HERE =================
 //=========== LIB CONTENT JSON DOWN HERE =================
 
-
-
 func (this *GlobalApi) GenerateUserDetailJson(userObj *models.User) interface{} {
 
 	//CTX.ResponseJSON()
@@ -341,4 +339,3 @@ func (this *GlobalApi) GenerateUserDetailJson(userObj *models.User) interface{} 
 	return result
 
 }
-

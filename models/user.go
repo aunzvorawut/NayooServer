@@ -22,33 +22,35 @@ type User struct {
 	PasswordNoEncrypt string    `orm:"null;size(128)"`
 	Password          string    `orm:"null;size(128)"`
 	Email             string    `orm:"null;size(128)"`
-	Bronze            int       `orm:"null"`
-	Silver            int       `orm:"null"`
-	Gold              int       `orm:"null"`
-	Image             string    `orm:"null;size(128)"`
-	IsAgent           bool
-	AgentName         string `orm:"null;size(128)"`
-	AgentEmail        string `orm:"null;size(128)"`
-	AgentImage        string `orm:"null;size(128)"`
-	AgentLineId       string `orm:"null;size(128)"`
-	AgentUrlFacebook  string `orm:"null;size(128)"`
-	AgentWebsite      string `orm:"null;size(128)"`
-	AgentResume       string `orm:"null;size(128)"`
-	Verified          bool   `orm:"default(false)"`
+	FacebookId        string    `orm:"null;size(50)"`
+	FirstName         string    `orm:"null;size(255)"`
+	LastName          string    `orm:"null;size(255)"`
+	FullName          string    `orm:"null;size(255)"`
+	MobileNumber      string    `orm:"null;size(255)"`
+	LineId            string    `orm:"null;size(255)"`
+	BirthDate         time.Time `orm:"null;type(datetime)"`
 
-	FacebookId           string                 `orm:"null;size(50)"`
-	FirstName            string                 `orm:"null;size(255)"`
-	LastName             string                 `orm:"null;size(255)"`
+	Bronze               int    `orm:"null"`
+	Silver               int    `orm:"null"`
+	Gold                 int    `orm:"null"`
+	Image                string `orm:"null;size(128)"`
+	IsAgent              bool
+	AgentName            string                 `orm:"null;size(128)"`
+	AgentEmail           string                 `orm:"null;size(128)"`
+	AgentImage           string                 `orm:"null;size(128)"`
+	AgentLineId          string                 `orm:"null;size(128)"`
+	AgentUrlFacebook     string                 `orm:"null;size(128)"`
+	AgentWebsite         string                 `orm:"null;size(128)"`
+	AgentResume          string                 `orm:"null;size(128)"`
+	Verified             bool                   `orm:"default(false)"`
 	DisplayName          string                 `orm:"null;size(255)"`
 	Career               string                 `orm:"null;size(255)"`
-	MobileNumber         string                 `orm:"null;size(255)"`
 	PhoneNumber          string                 `orm:"null;size(255)"`
 	Address              string                 `orm:"null;size(255)"`
 	Province             string                 `orm:"null;size(255)"`
 	District             string                 `orm:"null;size(255)"`
 	SubDistrict          string                 `orm:"null;size(255)"`
 	Gender               string                 `orm:"null;size(50)"`
-	BirthDate            time.Time              `orm:"null;type(datetime)"`
 	RegisterDate         time.Time              `orm:"type(datetime)"`
 	AuthenticationTokens []*AuthenticationToken `orm:"reverse(many)"`
 }

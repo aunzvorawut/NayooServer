@@ -22,38 +22,46 @@ var globalApp = fb.New(FACEBOOK_APP_ID, FACEBOOK_APP_SECRET)
 
 func (this *UserController) Register() {
 
-	params := this.GlobalParams()
+	params := this.GlobalParamsJWT()
 
-	firstname := params.FirstName
-	lastname := params.LastName
+	fullName := params.FullName
 	username := params.Username // email
+	TitleName := params.TitleName
+	MobilePhone := params.MobilePhone
+	LineID := params.LineId
+	birthDate := params.Birthdate
 	password := params.Password
 	password2 := params.PasswordConfirm
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
 
-	if firstname == "" || lastname == "" || username == "" || password == "" || password2 == "" {
-		this.ResponseJSON(nil, 406, "Bad Request")
+	if fullName == "" || username == "" || password == "" || password2 == "" || TitleName == "" || MobilePhone == "" || LineID == "" || birthDate == "" {
+		beego.Error("error")
+		this.ResponseJSON(nil, 400, BAD_REQUEST_TH)
 		return
 	}
 	if password != password2 {
-		this.ResponseJSON(nil, 406, "Password mismatch")
+		beego.Error("error")
+		this.ResponseJSON(nil, 400, BAD_REQUEST_TH)
 		return
 	}
 
 	if IsUsernameAvailable(username) == false {
-		this.ResponseJSON(nil, 406, "duplicate username")
+		beego.Error("error")
+		this.ResponseJSON(nil, 400, DUPLICATE_USER_TH)
 		return
 	}
-	if saveUser(username, password, firstname, lastname) == false {
-		this.ResponseJSON(nil, 406, "internal server error")
+	if saveUser(username, password, fullName) == false {
+		beego.Error("error")
+		this.ResponseJSON(nil, 400, SERVER_ERROR_TH)
 		return
 	}
 
 	registerCode := newRegistrationCode(username, "register")
 
 	if registerCode == nil {
-		this.ResponseJSON(nil, 406, "internal server error")
+		beego.Error("error")
+		this.ResponseJSON(nil, 400, SERVER_ERROR_TH)
 		return
 	}
 
@@ -65,7 +73,7 @@ func (this *UserController) Register() {
 
 func (this *UserController) LoginByFacebook() {
 
-	params := this.GlobalParams()
+	params := this.GlobalParamsJWT()
 
 	facebookId := params.FacebookId
 	facebookToken := params.FacebookToken
@@ -98,10 +106,12 @@ func (this *UserController) LoginByFacebook() {
 
 func (this *UserController) Authenticate() {
 
-	username := this.GetString("username")
-	password := this.GetString("password")
-	nonce := this.GetString("nonce")
-	timestamp, _ := this.GetInt64("timestamp")
+	params := this.GlobalParamsJWT()
+
+	username := params.Username
+	password := params.Password
+	nonce := params.Nonce
+	timestamp := params.TimeStamp
 
 	if username == "" || password == "" {
 		this.ResponseJSON(nil, 428, "INVALID_ARGUMENT")
@@ -131,10 +141,8 @@ func (this *UserController) Authenticate() {
 
 func (this *UserController) VerifyEmailUser() {
 
-	params := this.GlobalParams()
-
+	params := this.GlobalParamsNormal()
 	token := params.Token
-
 	registerCode := models.GetRegisterCodeByToken(token, "register")
 	baseUrl := beego.AppConfig.String("registerurl")
 	if registerCode != nil {
@@ -169,7 +177,7 @@ func (this *UserController) VerifyEmailUser() {
 
 func (this *UserController) ForgotPassword() {
 
-	params := this.GlobalParams()
+	params := this.GlobalParamsJWT()
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
 
@@ -193,7 +201,7 @@ func (this *UserController) ForgotPassword() {
 
 func (this *UserController) ResetPassword() {
 
-	params := this.GlobalParams()
+	params := this.GlobalParamsJWT()
 
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
@@ -250,7 +258,9 @@ func (this *UserController) ResetPassword() {
 
 func (this *UserController) GetUserProfile() {
 
-	accessToken := this.GetString("accessToken")
+	params := this.GlobalParamsJWT()
+
+	accessToken := params.AccessToken
 	user := GetUserByToken(accessToken)
 	if user != nil {
 
@@ -287,13 +297,17 @@ func (this *UserController) UpdateUserProfile() {
 		}
 
 		user.Image = reasonUpload
+		fullname := ""
 
 		if firstname := this.GetString("firstname"); firstname != "" {
 			user.FirstName = firstname
+			fullname += firstname + " "
 		}
 		if lastname := this.GetString("lastname"); lastname != "" {
 			user.LastName = lastname
+			fullname += "" + lastname
 		}
+		user.FullName = fullname
 		if career := this.GetString("career"); career != "" {
 			user.Career = career
 		}
@@ -391,6 +405,7 @@ func saveFacebookUser(facebookId, email, firstName, lastName, displayName, gende
 		if result = models.GetUserByFacebookId(facebookId); result != nil {
 			result.FirstName = firstName
 			result.LastName = lastName
+			result.FullName = firstName + lastName
 			result.DisplayName = displayName
 			result.Gender = gender
 			result.BirthDate = birthDate
@@ -402,6 +417,7 @@ func saveFacebookUser(facebookId, email, firstName, lastName, displayName, gende
 			result.FacebookId = facebookId
 			result.FirstName = firstName
 			result.LastName = lastName
+			result.FullName = firstName + lastName
 			result.DisplayName = displayName
 			result.Gender = gender
 			result.BirthDate = birthDate
@@ -421,6 +437,7 @@ func saveFacebookUser(facebookId, email, firstName, lastName, displayName, gende
 				Email:        email,
 				FirstName:    firstName,
 				LastName:     lastName,
+				FullName:     firstName + lastName,
 				DisplayName:  displayName,
 				Gender:       gender,
 				BirthDate:    birthDate,
@@ -497,7 +514,7 @@ func IsUsernameAvailable(username string) bool {
 	return models.IsUsernameAvailable(username)
 }
 
-func saveUser(username, password, firstname, lastname string) bool {
+func saveUser(username, password, fullName string) bool {
 	result := true
 	if hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost); err == nil {
 		if facebookUser := models.GetFacebookUserByEmail(username); facebookUser != nil {
@@ -512,8 +529,7 @@ func saveUser(username, password, firstname, lastname string) bool {
 			user := models.User{
 				Username:     username,
 				Password:     string(hashedPassword),
-				FirstName:    firstname,
-				LastName:     lastname,
+				FullName:     fullName,
 				Email:        username,
 				RegisterDate: time.Now(),
 			}
