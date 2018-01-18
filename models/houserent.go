@@ -8,47 +8,53 @@ import (
 
 	"github.com/astaxie/beego/orm"
 	"time"
-	"github.com/astaxie/beego"
 )
 
-type AuthenticationToken struct {
-	Id          int64     `orm:"pk;auto"`
-	AccessToken string    `orm:"type(text);null"`
-	User        *User     `orm:"rel(fk)"`
-	ExpiredDate time.Time `orm:"null;type(datetime)"`
-	Created     time.Time `orm:"auto_now_add;type(datetime)"`
-	Updated     time.Time `orm:"auto_now;type(datetime)"`
+type Houserent struct {
+	Id      int64     `orm:"pk;auto"`
+	Created time.Time `orm:"auto_now_add;type(datetime)"`
+	Updated time.Time `orm:"auto_now;type(datetime)"`
+	Start   time.Time `orm:"null;type(datetime)"`
+	Expired time.Time `orm:"null;type(datetime)"`
+	Enabled bool      `orm:"null;default(true)"`
+	VipType string    `orm:"null;size(255)"` // gold , silver , bronze
+	Image   string    `orm:"null;size(255)"`
+
+	TitleTh         string `orm:"null;size(255)"`
+	TitleEng        string `orm:"null;size(255)"`
+	ResidentTypeTh  string `orm:"null;size(255)"` // ขาย,เช่า,ขาย/เช่า
+	ResidentTypeEng string `orm:"null;size(255)"` // sale,rent,sale/rent
 }
 
 func init() {
-	orm.RegisterModel(new(AuthenticationToken))
+	orm.RegisterModel(new(Houserent))
 }
 
-// AddAuthenticationToken insert a new AuthenticationToken into database and returns
+// AddHouserent insert a new Houserent into database and returns
 // last inserted Id on success.
-func AddAuthenticationToken(m *AuthenticationToken) (id int64, err error) {
+func AddHouserent(m *Houserent) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
 
-// GetAuthenticationTokenById retrieves AuthenticationToken by Id. Returns error if
+// GetHouserentById retrieves Houserent by Id. Returns error if
 // Id doesn't exist
-func GetAuthenticationTokenById(id int64) (v *AuthenticationToken, err error) {
+func GetHouserentById(id int64) (v *Houserent, err error) {
 	o := orm.NewOrm()
-	v = &AuthenticationToken{Id: id}
-	if err = o.QueryTable(new(AuthenticationToken)).Filter("Id", id).RelatedSel().One(v); err == nil {
+	v = &Houserent{Id: id}
+	if err = o.QueryTable(new(Houserent)).Filter("Id", id).RelatedSel().One(v); err == nil {
 		return v, nil
 	}
 	return nil, err
 }
 
-// GetAllAuthenticationToken retrieves all AuthenticationToken matches certain condition. Returns empty list if
+// GetAllHouserent retrieves all Houserent matches certain condition. Returns empty list if
 // no records exist
-func GetAllAuthenticationToken(query map[string]string, fields []string, sortby []string, order []string,
+func GetAllHouserent(query map[string]string, fields []string, sortby []string, order []string,
 	offset int64, limit int64) (ml []interface{}, err error) {
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(AuthenticationToken))
+	qs := o.QueryTable(new(Houserent))
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
@@ -94,7 +100,7 @@ func GetAllAuthenticationToken(query map[string]string, fields []string, sortby 
 		}
 	}
 
-	var l []AuthenticationToken
+	var l []Houserent
 	qs = qs.OrderBy(sortFields...).RelatedSel()
 	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
 		if len(fields) == 0 {
@@ -117,11 +123,11 @@ func GetAllAuthenticationToken(query map[string]string, fields []string, sortby 
 	return nil, err
 }
 
-// UpdateAuthenticationToken updates AuthenticationToken by Id and returns error if
+// UpdateHouserent updates Houserent by Id and returns error if
 // the record to be updated doesn't exist
-func UpdateAuthenticationTokenById(m *AuthenticationToken) (err error) {
+func UpdateHouserentById(m *Houserent) (err error) {
 	o := orm.NewOrm()
-	v := AuthenticationToken{Id: m.Id}
+	v := Houserent{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
@@ -132,61 +138,34 @@ func UpdateAuthenticationTokenById(m *AuthenticationToken) (err error) {
 	return
 }
 
-// DeleteAuthenticationToken deletes AuthenticationToken by Id and returns error if
+// DeleteHouserent deletes Houserent by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteAuthenticationToken(id int64) (err error) {
+func DeleteHouserent(id int64) (err error) {
 	o := orm.NewOrm()
-	v := AuthenticationToken{Id: id}
+	v := Houserent{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
-		if num, err = o.Delete(&AuthenticationToken{Id: id}); err == nil {
+		if num, err = o.Delete(&Houserent{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}
 	return
 }
 
-func GetAuthToken(accessToken string) *AuthenticationToken {
-	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("AccessToken", accessToken).RelatedSel().Limit(1).One(auth)
-	if err != nil {
-		return nil
-	}
-	return auth
-}
+func GetAllHouserentOnClientByEnabledAndStartAndExpired(max, offset int) (ml []*Houserent, count int64) {
 
-func GetAuthTokenByUserId(userId int64) *AuthenticationToken {
-	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("User__Id", userId).Limit(1).One(auth)
-	if err != nil {
-		return nil
-	}
-	return auth
-}
+	currentTime := time.Now()
 
-func GetUserByAccessToken(accessToken string) *User {
 	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("AccessToken", accessToken).RelatedSel("User").Limit(1).One(auth)
-	if err != nil {
-		return nil
+	qs := o.QueryTable(new(Houserent))
+	qs.Filter("start", currentTime).Filter("expired__gt", currentTime).Filter("enabled", true).RelatedSel()
+	count, _ = qs.Count()
+
+	if _, err := qs.Limit(max, offset).All(&ml); err == nil {
+		return ml, count
 	}
 
-	user := auth.User
+	return nil, count
 
-	return user
-}
-
-func GetAuthTokensByUser(user User) []*AuthenticationToken {
-	o := orm.NewOrm()
-	var auths []*AuthenticationToken
-	_, err := o.QueryTable(new(AuthenticationToken)).Filter("User__Id", user.Id).RelatedSel("Device").OrderBy("-Created").Limit(10).All(&auths)
-	if err != nil {
-		beego.Error(err)
-		return auths
-	}
-	return auths
 }

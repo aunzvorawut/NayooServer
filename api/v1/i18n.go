@@ -2,7 +2,7 @@ package v1
 
 const (
 	SUCCESS_TH  = "สำเร็จ"
-	SUCCESS_END = "SUCCESS"
+	SUCCESS_ENG = "SUCCESS"
 
 	ERROR_MESSAGE_TH  = "ขัดข้องทั่วไป"
 	ERROR_MESSAGE_ENG = "simple error"
@@ -21,4 +21,23 @@ const (
 
 	SERVER_ERROR_TH  = "internal server error"
 	SERVER_ERROR_ENG = "internal server error"
+
+	TRY_AGAIN_TH = "กรุณาลองใหม่"
+	TRY_AGAIN_ENG = "Please try again"
+
+	USER_NOT_FOUND_TH = "ไม่บพผู้ใช้งาน"
+	USER_NOT_FOUND_ENG = "user not found"
+
+	WELCOME_TH = "ยินดีต้อนรับ"
+	WELCOME_ENG = "Welcome to nayoo.com"
+
+	SYSTEM_ERROR_TH = "ระบบขัดข้อง"
+	SYSTEM_ERROR_ENG = "system error"
+
+	USER_NOT_VERIFY_TH = "กรุณายืนยันผู้ใช้งานที่ email"
+	USER_NOT_VERIFY_ENG = "USER NOT VERIFY"
+
+	LOGIN_FAIL_TH = "ผู้ใช้งานไม่ถูกต้อง"
+	LOGIN_FAIL_ENG = "username or password incorrect"
+
 )

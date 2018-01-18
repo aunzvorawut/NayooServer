@@ -11,44 +11,48 @@ import (
 	"github.com/astaxie/beego"
 )
 
-type AuthenticationToken struct {
-	Id          int64     `orm:"pk;auto"`
-	AccessToken string    `orm:"type(text);null"`
-	User        *User     `orm:"rel(fk)"`
-	ExpiredDate time.Time `orm:"null;type(datetime)"`
-	Created     time.Time `orm:"auto_now_add;type(datetime)"`
-	Updated     time.Time `orm:"auto_now;type(datetime)"`
+type Banner struct {
+	Id            int64     `orm:"pk;auto"`
+	Created       time.Time `orm:"auto_now_add;type(datetime)"`
+	Updated       time.Time `orm:"auto_now;type(datetime)"`
+	Start         time.Time `orm:"null;type(datetime)"`
+	Expired       time.Time `orm:"null;type(datetime)"`
+	Enabled       bool      `orm:"null;default(true)"`
+	OrderPosition int
+	Grade         string `orm:"null;size(255)"`
+	Image         string `orm:"null;size(255)"`
+	BannerType      string `orm:"null;size(255)"`
 }
 
 func init() {
-	orm.RegisterModel(new(AuthenticationToken))
+	orm.RegisterModel(new(Banner))
 }
 
-// AddAuthenticationToken insert a new AuthenticationToken into database and returns
+// AddBanner insert a new Banner into database and returns
 // last inserted Id on success.
-func AddAuthenticationToken(m *AuthenticationToken) (id int64, err error) {
+func AddBanner(m *Banner) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
 
-// GetAuthenticationTokenById retrieves AuthenticationToken by Id. Returns error if
+// GetBannerById retrieves Banner by Id. Returns error if
 // Id doesn't exist
-func GetAuthenticationTokenById(id int64) (v *AuthenticationToken, err error) {
+func GetBannerById(id int64) (v *Banner, err error) {
 	o := orm.NewOrm()
-	v = &AuthenticationToken{Id: id}
-	if err = o.QueryTable(new(AuthenticationToken)).Filter("Id", id).RelatedSel().One(v); err == nil {
+	v = &Banner{Id: id}
+	if err = o.QueryTable(new(Banner)).Filter("Id", id).RelatedSel().One(v); err == nil {
 		return v, nil
 	}
 	return nil, err
 }
 
-// GetAllAuthenticationToken retrieves all AuthenticationToken matches certain condition. Returns empty list if
+// GetAllBanner retrieves all Banner matches certain condition. Returns empty list if
 // no records exist
-func GetAllAuthenticationToken(query map[string]string, fields []string, sortby []string, order []string,
+func GetAllBanner(query map[string]string, fields []string, sortby []string, order []string,
 	offset int64, limit int64) (ml []interface{}, err error) {
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(AuthenticationToken))
+	qs := o.QueryTable(new(Banner))
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
@@ -94,7 +98,7 @@ func GetAllAuthenticationToken(query map[string]string, fields []string, sortby 
 		}
 	}
 
-	var l []AuthenticationToken
+	var l []Banner
 	qs = qs.OrderBy(sortFields...).RelatedSel()
 	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
 		if len(fields) == 0 {
@@ -117,11 +121,11 @@ func GetAllAuthenticationToken(query map[string]string, fields []string, sortby 
 	return nil, err
 }
 
-// UpdateAuthenticationToken updates AuthenticationToken by Id and returns error if
+// UpdateBanner updates Banner by Id and returns error if
 // the record to be updated doesn't exist
-func UpdateAuthenticationTokenById(m *AuthenticationToken) (err error) {
+func UpdateBannerById(m *Banner) (err error) {
 	o := orm.NewOrm()
-	v := AuthenticationToken{Id: m.Id}
+	v := Banner{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
@@ -132,61 +136,31 @@ func UpdateAuthenticationTokenById(m *AuthenticationToken) (err error) {
 	return
 }
 
-// DeleteAuthenticationToken deletes AuthenticationToken by Id and returns error if
+// DeleteBanner deletes Banner by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteAuthenticationToken(id int64) (err error) {
+func DeleteBanner(id int64) (err error) {
 	o := orm.NewOrm()
-	v := AuthenticationToken{Id: id}
+	v := Banner{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
-		if num, err = o.Delete(&AuthenticationToken{Id: id}); err == nil {
+		if num, err = o.Delete(&Banner{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}
 	return
 }
 
-func GetAuthToken(accessToken string) *AuthenticationToken {
+func GetAllBannerByBannerTypeAndEnabledAndStartAndExpired(bannerType string) (result []*Banner) {
+
+	stringQuery := " select id as id , image as image from banner where banner_type = ? "
+
+	beego.Debug(stringQuery)
 	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("AccessToken", accessToken).RelatedSel().Limit(1).One(auth)
+	_, err := o.Raw(stringQuery, bannerType).QueryRows(&result)
 	if err != nil {
-		return nil
+		beego.Error(err.Error())
 	}
-	return auth
-}
+	return result
 
-func GetAuthTokenByUserId(userId int64) *AuthenticationToken {
-	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("User__Id", userId).Limit(1).One(auth)
-	if err != nil {
-		return nil
-	}
-	return auth
-}
-
-func GetUserByAccessToken(accessToken string) *User {
-	o := orm.NewOrm()
-	auth := new(AuthenticationToken)
-	err := o.QueryTable(new(AuthenticationToken)).Filter("AccessToken", accessToken).RelatedSel("User").Limit(1).One(auth)
-	if err != nil {
-		return nil
-	}
-
-	user := auth.User
-
-	return user
-}
-
-func GetAuthTokensByUser(user User) []*AuthenticationToken {
-	o := orm.NewOrm()
-	var auths []*AuthenticationToken
-	_, err := o.QueryTable(new(AuthenticationToken)).Filter("User__Id", user.Id).RelatedSel("Device").OrderBy("-Created").Limit(10).All(&auths)
-	if err != nil {
-		beego.Error(err)
-		return auths
-	}
-	return auths
 }

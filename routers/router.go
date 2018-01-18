@@ -14,8 +14,10 @@ import (
 func init() {
 	beego.Router("/", &controllers.MainController{})
 
+	beego.NSBefore(FilterDebug)
+
 	nsAPI := beego.NewNamespace("/v1",
-		beego.NSBefore(FilterJwt , FilterDebug),
+		beego.NSBefore(FilterJwt),
 
 		beego.NSNamespace("/api",
 			//beego.NSBefore(FilterNonce),
@@ -23,11 +25,36 @@ func init() {
 				beego.NSRouter("/register", &v1.UserController{}, "get,post:Register"),
 				beego.NSRouter("/loginbyemail", &v1.UserController{}, "get,post:Authenticate"),
 				beego.NSRouter("/loginbyfacebook", &v1.UserController{}, "get,post:LoginByFacebook"),
-				beego.NSRouter("/verify", &v1.UserController{}, "get:VerifyEmailUser"),
+				beego.NSRouter("/verify", &v1.UserController{}, "get,post:VerifyEmailUser"),
 				beego.NSRouter("/forgotpassword", &v1.UserController{}, "post:ForgotPassword"),
 				beego.NSRouter("/resetpassword", &v1.UserController{}, "post:ResetPassword"),
 				beego.NSRouter("/getUserProfile", &v1.UserController{}, "get,post:GetUserProfile"),
 				beego.NSRouter("/updateUserProfile", &v1.UserController{}, "get,post:UpdateUserProfile"),
+			),
+
+			beego.NSNamespace("/housesale",
+				beego.NSRouter("/list", &v1.HousesaleController{}, "get,post:List"),
+			),
+
+			beego.NSNamespace("/houserent",
+				beego.NSRouter("/list", &v1.HouserentController{}, "get,post:List"),
+			),
+
+			beego.NSNamespace("/houseproject",
+				beego.NSRouter("/list", &v1.HouseProjectController{}, "get,post:List"),
+				beego.NSRouter("/main", &v1.HouseProjectController{}, "get,post:Main"),
+			),
+
+			beego.NSNamespace("/ownproject",
+				beego.NSRouter("/list", &v1.OwnProjectController{}, "get,post:List"),
+			),
+
+			beego.NSNamespace("/agent",
+				beego.NSRouter("/list", &v1.AgentController{}, "get,post:List"),
+			),
+
+			beego.NSNamespace("/entrepreneur",
+				beego.NSRouter("/list", &v1.EntrepreneurController{}, "get,post:List"),
 			),
 		),
 	)
@@ -43,6 +70,15 @@ func init() {
 }
 
 var FilterJwt = func(ctx *context.Context) {
+
+	beego.Debug("body:", string(ctx.Input.RequestBody))
+	beego.Debug("params:", ctx.Input.Params())
+	beego.Debug("form:", ctx.Request.Form)
+	beego.Debug("postform:", ctx.Request.PostForm)
+	beego.Debug("RequestURI", ctx.Request.RequestURI)
+	for name, value := range ctx.Request.Header {
+		beego.Debug(name, ":", value)
+	}
 
 	data := ctx.Request.FormValue("data")
 	token, valid := v1.IsJwtTokenValid(data)
@@ -60,9 +96,9 @@ var FilterJwt = func(ctx *context.Context) {
 		w.WriteHeader(400)
 
 		results := map[string]interface{}{
-			"Code":  400,
-			"Message":      "error",
-			"ResponseObject":        make(map[string]interface{}, 0),
+			"code":           400,
+			"message":        "error",
+			"responseObject": make(map[string]interface{}, 0),
 		}
 		response, _ := json.Marshal(results)
 
@@ -90,9 +126,9 @@ var FilterJwt = func(ctx *context.Context) {
 		w.WriteHeader(400)
 
 		results := map[string]interface{}{
-			"Code":  400,
-			"Message":      "error",
-			"ResponseObject":        make(map[string]interface{}, 0),
+			"code":           400,
+			"message":        "error",
+			"responseObject": make(map[string]interface{}, 0),
 		}
 		response, _ := json.Marshal(results)
 
@@ -114,9 +150,9 @@ var FilterNonce = func(ctx *context.Context) {
 		w.WriteHeader(400)
 
 		results := map[string]interface{}{
-			"Code":  400,
-			"Message":      "error",
-			"ResponseObject":        make(map[string]interface{}, 0),
+			"code":           400,
+			"message":        "error",
+			"responseObject": make(map[string]interface{}, 0),
 		}
 
 		response, _ := json.Marshal(results)
@@ -133,9 +169,9 @@ var FilterNonce = func(ctx *context.Context) {
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.WriteHeader(400)
 		results := map[string]interface{}{
-			"Code":  400,
-			"Message":      "error",
-			"ResponseObject":        make(map[string]interface{}, 0),
+			"code":           400,
+			"message":        "error",
+			"responseObject": make(map[string]interface{}, 0),
 		}
 		response, _ := json.Marshal(results)
 		w.Write([]byte(response))
@@ -153,9 +189,9 @@ var FilterNonce = func(ctx *context.Context) {
 			w.WriteHeader(400)
 
 			results := map[string]interface{}{
-				"Code":  400,
-				"Message":      "error",
-				"ResponseObject":        make(map[string]interface{}, 0),
+				"code":           400,
+				"message":        "error",
+				"responseObject": make(map[string]interface{}, 0),
 			}
 			response, _ := json.Marshal(results)
 

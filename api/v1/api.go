@@ -31,16 +31,22 @@ const (
 	FORM_MAIL     = "allabouthome.am@gmail.com"
 	SecretKey     = "uB2Ph3YVzTjXjKhZ58tv"
 	AccessKey     = "Ub2Ph3YVzTjXjKhZ58TV"
+
+	TYPE_SALE         = "type_sale"
+	TYPE_RENT         = "type_rent"
+	TYPE_PROJECT      = "type_project"
+	TYPE_ENTERPRENEUR = "type_enterpreneur"
+	TYPE_AGENT        = "type_agent"
 )
 
-const emailTemplate = `Verify your email to start using All About Home / กรุณายืนยัน  Email ของคุณ,<br/>
+const emailTemplate = `Verify your email to start using Nayoo / กรุณายืนยัน  Email ของคุณ,<br/>
 <br/>
 <hr/>
 <br/>
 <br/>
-Welcome to All About Home Just verify your email to get started. We do this as a security precaution to verify your credentials.
+Welcome to Nayoo Just verify your email to get started. We do this as a security precaution to verify your credentials.
 <br/>
-ยินดีต้อนรับสู่บริการ All About Home กรุณายืนยันตัวตนของคุณด้วยการ Click  Verify Email ด้านล่าง<br/>
+ยินดีต้อนรับสู่บริการ Nayoo กรุณายืนยันตัวตนของคุณด้วยการ Click  Verify Email ด้านล่าง<br/>
 &nbsp;<a href="$url">กดที่นี่เพื่อยืนยัน</a><br/>`
 
 const forgetPasswordTpl = `
@@ -96,16 +102,16 @@ func GetUserByToken(accessToken string) *models.User {
 }
 
 func SendRegisterMail(username, token, typeStr string) {
-	baseUrl := beego.AppConfig.String("serverurl")
-	urlToken := baseUrl + "/user/verify?token=" + token
+	clientUrl := beego.AppConfig.String("client_register_url")
+	urlToken := clientUrl + "/user/verify?token=" + token
 	emailTpl := strings.Replace(emailTemplate, "$url", urlToken, 1)
 	subj := "Nayoo Registration Email"
 	if typeStr == "resetpassword" {
-		baseUrl = beego.AppConfig.String("resetpasswdurl")
-		urlToken = baseUrl + "?token=" + token
+		clientUrl = beego.AppConfig.String("client_reset_password_url")
+		urlToken = clientUrl + "?token=" + token
 		emailTpl = strings.Replace(forgetPasswordTpl, "$user.username", username, 1)
 		emailTpl = strings.Replace(emailTpl, "$url", urlToken, 1)
-		subj = "All About Home Password Reset Email"
+		subj = "Nayoo Password Reset Email"
 	}
 
 	SendEmail(username, subj, emailTpl)
@@ -113,7 +119,7 @@ func SendRegisterMail(username, token, typeStr string) {
 
 func SendSubscriptionMail(username, status string) {
 
-	subj := "All About Home ผลการทำรายการ"
+	subj := "Nayoo ผลการทำรายการ"
 	emailTpl := strings.Replace(subscribeTpl, "$user.username", username, 1)
 	emailMsg := ""
 	if status == "SUCCESS" {
@@ -139,9 +145,14 @@ func SendEmail(to, subj, message string) {
 		Host:     "smtp.gmail.com",
 		Port:     587,
 		From:     "allabouthome.am@gmail.com",
-		To:       []string{to},
-		Subject:  subj,
-		HTML:     message,
+		//Username: "support@wisdomcloud.net",
+		//Password: "u794jkQnCy8mgDkm",
+		//Host:     "mail.wisdomcloud.net",
+		//Port:     587,
+		//From:     "support@wisdomcloud.net",
+		To:      []string{to},
+		Subject: subj,
+		HTML:    message,
 	}
 
 	err := email.Send()
@@ -242,25 +253,37 @@ func RecordError(descripiton string, functioName string, err error) {
 	}
 }
 
-func (this *GlobalApi) GetStringByLanguage(stringDefault, stringTh, stringEng string) string {
+func GetStringByLanguage(stringDefault, stringTh, stringEng string , paramsJwt ValueParam) string {
 
-	language := this.GetString(LANGUAGE, "th")
+	language := paramsJwt.LANGUAGE
 	result := stringDefault
 
-	if language == "th" {
+	if language == "th" || language == "TH" || language == "Th" {
+
 		if stringTh == "" {
 			result = stringDefault
 		} else {
 			result = stringTh
 		}
-	} else if language == "eng" {
+
+	} else if language == "eng" || language == "ENG" || language == "Eng" {
+
 		if stringEng == "" {
 			result = stringDefault
 		} else {
 			result = stringTh
 		}
 	}
+
+	if result == "" {
+		result = stringTh
+	}
+	if result == "" {
+		result = stringEng
+	}
+
 	return result
+
 }
 
 func GetCurrentPath() string {
@@ -338,4 +361,98 @@ func (this *GlobalApi) GenerateUserDetailJson(userObj *models.User) interface{} 
 
 	return result
 
+}
+
+func CreateMockyBanner(size int) []map[string]interface{} {
+
+	result := make([]map[string]interface{}, size)
+
+	for i := 1; i <= size; i++ {
+		re := map[string]interface{}{
+			ID:    i,
+			IMAGE: GetHostNayooName() + "static/img/default_banner.png",
+		}
+
+		result[i-1] = re
+	}
+	return result
+
+}
+
+func CreateMockyTagTypeList(size int) []map[string]interface{}{
+
+	result := make([]map[string]interface{} , size)
+	for i := 0 ; i< size ; i++{
+		result[i] = map[string]interface{}{
+			ID:i+1,
+			TAG_TYPE_STR:"ผ้าม่าน/วอลเปเปอร์/ฉากกั้นห้อง",
+		}
+	}
+	return result
+}
+
+func CreateMockyVideoList(size int) []map[string]interface{}{
+	result := make([]map[string]interface{} , size)
+	for i := 0 ; i< size ; i++{
+		result[i] = map[string]interface{}{
+			ID:i+1,
+			VIDEO_LINK:"http://techslides.com/demos/sample-videos/small.mp4",
+		}
+	}
+	return result
+
+}
+
+func CreateMockyResidentType(id int64) []map[string]interface{} {
+
+	switch os := id % 5; os {
+	case 1:
+		return []map[string]interface{}{
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"บ้านเดี่ยว",
+			},
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"คอนโด",
+			},
+		}
+	case 2:
+		return []map[string]interface{}{
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"บ้านเดี่ยว",
+			},
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"ทาวน์โฮม",
+			},
+		}
+	case 3:
+		return []map[string]interface{}{
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"บ้านเดี่ยว",
+			},
+		}
+	case 4:
+		return []map[string]interface{}{
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"ทาวน์โฮม",
+			},
+		}
+	default:
+		return []map[string]interface{}{
+			map[string]interface{}{
+				ICON:"",
+				TEXT:"คอนโด",
+			},
+		}
+	}
+
+}
+
+func GetHostNayooName() string {
+	return beego.AppConfig.String("nayooServerName")
 }

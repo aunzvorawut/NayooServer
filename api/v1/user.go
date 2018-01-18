@@ -37,23 +37,23 @@ func (this *UserController) Register() {
 
 	if fullName == "" || username == "" || password == "" || password2 == "" || TitleName == "" || MobilePhone == "" || LineID == "" || birthDate == "" {
 		beego.Error("error")
-		this.ResponseJSON(nil, 400, BAD_REQUEST_TH)
+		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG , params))
 		return
 	}
 	if password != password2 {
 		beego.Error("error")
-		this.ResponseJSON(nil, 400, BAD_REQUEST_TH)
+		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG , params))
 		return
 	}
 
 	if IsUsernameAvailable(username) == false {
 		beego.Error("error")
-		this.ResponseJSON(nil, 400, DUPLICATE_USER_TH)
+		this.ResponseJSON(nil, 400, GetStringByLanguage(DUPLICATE_USER_TH, DUPLICATE_USER_TH, DUPLICATE_USER_ENG , params))
 		return
 	}
 	if saveUser(username, password, fullName) == false {
 		beego.Error("error")
-		this.ResponseJSON(nil, 400, SERVER_ERROR_TH)
+		this.ResponseJSON(nil, 400, GetStringByLanguage(SERVER_ERROR_TH, SERVER_ERROR_TH, SERVER_ERROR_ENG , params))
 		return
 	}
 
@@ -61,13 +61,13 @@ func (this *UserController) Register() {
 
 	if registerCode == nil {
 		beego.Error("error")
-		this.ResponseJSON(nil, 400, SERVER_ERROR_TH)
+		this.ResponseJSON(nil, 400, GetStringByLanguage(SERVER_ERROR_TH, SERVER_ERROR_TH, SERVER_ERROR_ENG,params))
 		return
 	}
 
 	go SendRegisterMail(username, registerCode.Token, "register")
 	addUsedNonce(nonce, timestamp)
-	this.ResponseJSON(nil, 200, "success")
+	this.ResponseJSON(nil, 200, GetStringByLanguage(SUCCESS_TH, SUCCESS_TH, SUCCESS_ENG,params))
 	return
 }
 
@@ -80,7 +80,7 @@ func (this *UserController) LoginByFacebook() {
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
 	if facebookId == "" {
-		this.ResponseJSON(nil, 406, "Bad Request")
+		this.ResponseJSON(nil, 400, "Bad Request")
 		return
 	}
 	user := loginByFacebook(facebookId, facebookToken)
@@ -93,14 +93,18 @@ func (this *UserController) LoginByFacebook() {
 				map[string]interface{}{
 					"accessToken": authToken.AccessToken,
 				},
-			}, 200, "success")
+			}, 200, GetStringByLanguage(SUCCESS_TH, SUCCESS_TH, SUCCESS_ENG,params))
+			return
 		} else {
-			this.ResponseJSON(nil, 406, "Bad Request")
+			this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG , params))
+			return
 		}
 	} else if user != nil && !user.Verified {
-		this.ResponseJSON(nil, 406, "Bad Request")
+		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG , params))
+		return
 	} else {
-		this.ResponseJSON(nil, 406, "Bad Request")
+		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG , params))
+		return
 	}
 }
 
@@ -114,7 +118,8 @@ func (this *UserController) Authenticate() {
 	timestamp := params.TimeStamp
 
 	if username == "" || password == "" {
-		this.ResponseJSON(nil, 428, "INVALID_ARGUMENT")
+		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG , params))
+		return
 	}
 	//beego.Debug(username, password)
 	user := authenticate(username, password)
@@ -128,23 +133,26 @@ func (this *UserController) Authenticate() {
 			this.ResponseJSON(map[string]interface{}{
 				"accessToken": authToken.AccessToken,
 			}, 200, "success")
+			return
 
 		} else {
-			this.ResponseJSON(nil, 500, "SOMETHING_WRONG")
+			this.ResponseJSON(nil, 500, GetStringByLanguage(SYSTEM_ERROR_TH, SYSTEM_ERROR_TH, SYSTEM_ERROR_ENG , params))
+			return
 		}
 	} else if user != nil && !user.Verified {
-		this.ResponseJSON(nil, 401, "USER_NOT_VERIFIED")
+		this.ResponseJSON(nil, 401, GetStringByLanguage(USER_NOT_VERIFY_TH, USER_NOT_VERIFY_TH, USER_NOT_VERIFY_ENG , params))
+		return
 	} else {
-		this.ResponseJSON(nil, 401, "UNAUTHORIZED")
+		this.ResponseJSON(nil, 401, GetStringByLanguage(LOGIN_FAIL_TH, LOGIN_FAIL_TH, LOGIN_FAIL_ENG , params))
+		return
 	}
 }
 
 func (this *UserController) VerifyEmailUser() {
 
-	params := this.GlobalParamsNormal()
+	params := this.GlobalParamsJWT()
 	token := params.Token
 	registerCode := models.GetRegisterCodeByToken(token, "register")
-	baseUrl := beego.AppConfig.String("registerurl")
 	if registerCode != nil {
 		user := models.GetUserByUsername(registerCode.Username)
 		if user != nil {
@@ -158,21 +166,23 @@ func (this *UserController) VerifyEmailUser() {
 				}
 
 			} else {
-				redirectUrl := baseUrl + "?status=error&msg=Please try again"
-				this.Redirect(redirectUrl, 302)
+				beego.Error("try again")
+				this.ResponseJSON(nil, 400, GetStringByLanguage(TRY_AGAIN_TH, TRY_AGAIN_TH, TRY_AGAIN_ENG , params))
+				return
 			}
 
 		} else {
-			redirectUrl := baseUrl + "?status=error&msg=User not found"
-			this.Redirect(redirectUrl, 302)
+			beego.Error("user not found")
+			this.ResponseJSON(nil, 400, GetStringByLanguage(USER_NOT_FOUND_TH, USER_NOT_FOUND_TH, USER_NOT_FOUND_ENG , params))
+			return
 		}
 	} else {
-		redirectUrl := baseUrl + "?status=error&msg=Register Code not found!"
-		this.Redirect(redirectUrl, 302)
+		beego.Error("register code not found")
+		this.ResponseJSON(nil, 400, GetStringByLanguage(TRY_AGAIN_TH, TRY_AGAIN_TH, TRY_AGAIN_ENG , params))
+		return
 	}
-
-	redirectUrl := baseUrl + "?status=success&msg=Welcome to nayoo.com"
-	this.Redirect(redirectUrl, 302)
+	this.ResponseJSON(nil, 200, GetStringByLanguage(WELCOME_TH, WELCOME_TH, WELCOME_ENG , params))
+	return
 }
 
 func (this *UserController) ForgotPassword() {
@@ -180,22 +190,24 @@ func (this *UserController) ForgotPassword() {
 	params := this.GlobalParamsJWT()
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
-
 	username := params.Username
-	if username == "" {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+
+	userObj := models.GetUserByUsername(username)
+
+	if username == "" || userObj == nil {
+		this.ResponseJSON(nil, 400, GetStringByLanguage(USER_NOT_FOUND_TH, USER_NOT_FOUND_TH, USER_NOT_FOUND_ENG , params))
 		return
 	}
 
-	registerCode := newRegistrationCode(username, "resetpassword")
+	registerCode := newRegistrationCode(userObj.Username, "resetpassword")
 	if registerCode == nil {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG , params))
 		return
 	}
 	go SendRegisterMail(username, registerCode.Token, "resetpassword")
 	addUsedNonce(nonce, timestamp)
 
-	this.ResponseJSON(nil, 200, this.GetStringByLanguage(RESET_PASSWORD_MESSAGE_TH, RESET_PASSWORD_MESSAGE_TH, RESET_PASSWORD_MESSAGE_ENG))
+	this.ResponseJSON(nil, 200, GetStringByLanguage(RESET_PASSWORD_MESSAGE_TH, RESET_PASSWORD_MESSAGE_TH, RESET_PASSWORD_MESSAGE_ENG , params))
 	return
 }
 
@@ -210,26 +222,26 @@ func (this *UserController) ResetPassword() {
 	confirmPassword := params.PasswordConfirm
 
 	if resetToken == "" || password == "" || confirmPassword == "" {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG , params))
 		return
 	}
 
 	addUsedNonce(nonce, timestamp)
 
 	if password != confirmPassword {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(PASSWORD_MISMATCH_TH, PASSWORD_MISMATCH_TH, PASSWORD_MISMATCH_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(PASSWORD_MISMATCH_TH, PASSWORD_MISMATCH_TH, PASSWORD_MISMATCH_ENG , params))
 		return
 	}
 
 	registerCode := models.GetRegisterCodeByToken(resetToken, "resetpassword")
 	if registerCode == nil {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG , params))
 		return
 	}
 
 	user := models.GetUserByUsername(registerCode.Username)
 	if user == nil {
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG , params))
 		return
 	}
 
@@ -245,12 +257,12 @@ func (this *UserController) ResetPassword() {
 		if errDel := models.DeleteRegistrationCode(registerCode.Id); errDel != nil {
 			beego.Error("Cannot delete ReisterCode("+user.Username+"): ", errDel.Error())
 		}
-		this.ResponseJSON(nil, 200, this.GetStringByLanguage(SUCCESS_TH, SUCCESS_END, SUCCESS_END))
+		this.ResponseJSON(nil, 200, GetStringByLanguage(SUCCESS_TH, SUCCESS_ENG, SUCCESS_ENG , params))
 		return
 
 	} else {
 		beego.Error("Cannot update user: ", err.Error())
-		this.ResponseJSON(nil, 428, this.GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG))
+		this.ResponseJSON(nil, 400, GetStringByLanguage(ERROR_MESSAGE_TH, ERROR_MESSAGE_TH, ERROR_MESSAGE_ENG , params))
 		return
 	}
 
@@ -263,11 +275,11 @@ func (this *UserController) GetUserProfile() {
 	accessToken := params.AccessToken
 	user := GetUserByToken(accessToken)
 	if user != nil {
-
 		this.ResponseJSON(this.GenerateUserDetailJson(user), 200, "success")
-
+		return
 	} else {
 		this.ResponseJSON(nil, 401, "UNAUTHORIZED")
+		return
 	}
 
 }
@@ -291,6 +303,7 @@ func (this *UserController) UpdateUserProfile() {
 
 			if checkUpload == false {
 				this.ResponseJSON(nil, 400, "BAD UPLOAD")
+				return
 			}
 		} else {
 			reasonUpload = user.Image
@@ -333,9 +346,11 @@ func (this *UserController) UpdateUserProfile() {
 		models.UpdateUserById(user)
 
 		this.ResponseJSON(this.GenerateUserDetailJson(user), 200, "success")
+		return
 
 	} else {
 		this.ResponseJSON(nil, 401, "UNAUTHORIZED")
+		return
 	}
 
 }

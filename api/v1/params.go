@@ -39,8 +39,63 @@ const (
 	OFFSET           string = "offset"
 	JSON_PARAMS      string = "json_params"
 
-	//keyjson
+	//-------------------  keyjson  ------------------
 
+	ID string = "id"
+
+	TITLE                   string = "title"
+	DESCRIPTION             string = "description"
+	PRICE                   string = "price"
+	IMAGE                   string = "image"
+	IMAGES                  string = "images"
+	VIP_TYPE                string = "vip_type"
+	SALE_STR                string = "sale_str"
+	SALE_STR_MARK           string = "sale_str_mark"
+	RENT_STR_MONTH          string = "rent_str_month"
+	RENT_STR_DAY            string = "rent_str_day"
+	RENT_STR_MONTH_MARK     string = "rent_str_month_mark"
+	RENT_STR_DAY_MARK       string = "rent_str_day_mark"
+	RESIDENT_TYPE_LIST      string = "resident_type_list"
+	RESIDENT_ADDRESS        string = "resident_address"
+	TAG_TYPE_LIST           string = "tag_type_list"
+	TAG_TYPE_STR            string = "tag_type_str"
+	COUNT_BEDROOM           string = "count_bedroom"
+	COUNT_BATHROOM          string = "count_bath_room"
+	AREA_LAND               string = "area_land"
+	AREA_USEFUL             string = "area_useful"
+	IS_PROMOTON_NAYOO       string = "is_promotion_nayuu"
+	IS_GURU                 string = "is_guru"
+	IS_VIDEO_360            string = "is_video_360"
+	IS_FAVORITE             string = "is_favorite"
+	IS_VERIFY_PERSON_IDCARD string = "is_verify_person_idcard"
+	IS_VERIFY_PERSON_POLICY string = "is_verify_person_policy"
+	IS_VERIFY_COMPANY       string = "is_verify_company"
+	IS_VERIFY_APARTMENT     string = "is_verify_apartment"
+	LIST_RECOMMEND_VIEW     string = "list_recommend_view"
+	LIST_VIDEO_VIEW         string = "list_video_view"
+	LIST_REVIEW_VIEW        string = "list_review_view"
+	LIST_POSTING_VIEW       string = "list_posting_view"
+	LIST_RELATE_VIEW        string = "list_relate_view"
+	LIST_BANNER_A_VIEW      string = "list_banner_a_view"
+	LIST_BANNER_B_VIEW      string = "list_banner_b_view"
+	LIST_BANNER_C_VIEW      string = "list_banner_c_view"
+	LIST_BANNER_OWN_PROJECT string = "list_banner_own_project"
+	REVIEW_STAR             string = "review_star"
+	REVIEW_COUNT            string = "review_count"
+	VIDEO_LINK              string = "video_link"
+
+	PROJECT_FININSH     string = "project_finish"
+	PROJECT_BRAND_IMAGE string = "project_brand_image"
+
+	LAT = "lat"
+	LNG = "lng"
+
+	ICON = "icon"
+	TEXT = "text"
+
+	COUNT_RESULT string = "count_result"
+	LIST_RESULT  string = "list_result"
+	PARAMS       string = "params"
 )
 
 type DataParameter struct {
@@ -56,7 +111,7 @@ type ValueParam struct {
 	LastName        string     `json:"last_name"`
 	FullName        string     `json:"full_name"`
 	Birthdate       string     `json:"birthdate"`
-	TitleName       string     `json:"title_name"` // mr , ms mrs
+	TitleName       string     `json:"title_name"` // mr , ms , mrs
 	MobilePhone     string     `json:"mobile_phone"`
 	LineId          string     `json:"line_id"`
 	FacebookId      string     `json:"facebook_id"`
@@ -214,7 +269,7 @@ func IsJwtTokenValid(data string) (*jwt.Token, bool) {
 
 	beego.Debug(err)
 
-	if err == nil && token.Valid {
+	if (err == nil || err.Error() == "Token used before issued") && token.Valid {
 		return token, true
 	} else {
 		return nil, false
@@ -224,4 +279,11 @@ func IsJwtTokenValid(data string) (*jwt.Token, bool) {
 func GetJsonData(ctx *context.Context) (bool, ValueParam) {
 	claims, ok := ctx.Input.GetData(JWT_NEW_ASSIGN_VALUE).(DataParameter)
 	return ok, claims.Data
+}
+
+func IntToFloat64(i int) float64 {
+	return float64(i)
+}
+func Float64ToString(input_num float64, digit int) string {
+	return strconv.FormatFloat(input_num, 'f', digit, 64)
 }
