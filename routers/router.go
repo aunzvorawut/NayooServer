@@ -7,7 +7,6 @@ import (
 	"gitlab.com/wisdomvast/NayooServer/api/v1"
 	"gitlab.com/wisdomvast/NayooServer/controllers"
 	"gitlab.com/wisdomvast/NayooServer/models"
-	"strconv"
 	"time"
 )
 
@@ -20,8 +19,8 @@ func init() {
 		beego.NSBefore(FilterJwt),
 
 		beego.NSNamespace("/api",
-			//beego.NSBefore(FilterNonce),
 			beego.NSNamespace("/user",
+				beego.NSBefore(FilterNonce),
 				beego.NSRouter("/register", &v1.UserController{}, "get,post:Register"),
 				beego.NSRouter("/loginbyemail", &v1.UserController{}, "get,post:Authenticate"),
 				beego.NSRouter("/loginbyfacebook", &v1.UserController{}, "get,post:LoginByFacebook"),
@@ -33,28 +32,53 @@ func init() {
 			),
 
 			beego.NSNamespace("/housesale",
-				beego.NSRouter("/list", &v1.HousesaleController{}, "get,post:List"),
+				beego.NSRouter("/list", &v1.HouseSaleController{}, "get,post:List"),
+
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.HouseSaleController{}, "get,post:ToggleFavorite"),
+				),
 			),
 
 			beego.NSNamespace("/houserent",
-				beego.NSRouter("/list", &v1.HouserentController{}, "get,post:List"),
+				beego.NSRouter("/list", &v1.HouseRentController{}, "get,post:List"),
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.HouseRentController{}, "get,post:ToggleFavorite"),
+				),
 			),
 
 			beego.NSNamespace("/houseproject",
 				beego.NSRouter("/list", &v1.HouseProjectController{}, "get,post:List"),
 				beego.NSRouter("/main", &v1.HouseProjectController{}, "get,post:Main"),
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.HouseProjectController{}, "get,post:ToggleFavorite"),
+				),
 			),
 
 			beego.NSNamespace("/ownproject",
 				beego.NSRouter("/list", &v1.OwnProjectController{}, "get,post:List"),
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.OwnProjectController{}, "get,post:ToggleFavorite"),
+				),
 			),
 
 			beego.NSNamespace("/agent",
 				beego.NSRouter("/list", &v1.AgentController{}, "get,post:List"),
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.AgentController{}, "get,post:ToggleFavorite"),
+				),
 			),
 
 			beego.NSNamespace("/entrepreneur",
 				beego.NSRouter("/list", &v1.EntrepreneurController{}, "get,post:List"),
+				beego.NSNamespace("/actions",
+					beego.NSBefore(FilterNonce),
+					beego.NSRouter("/toggleFavorite", &v1.EntrepreneurController{}, "get,post:ToggleFavorite"),
+				),
 			),
 		),
 	)
@@ -140,53 +164,15 @@ var FilterJwt = func(ctx *context.Context) {
 
 var FilterNonce = func(ctx *context.Context) {
 
-	nonce := v1.ToString(ctx.Request.FormValue("nonce"))
-	timestamp, _ := strconv.ParseInt(ctx.Request.FormValue("timestamp"), 10, 64)
+	claims, ok := ctx.Input.GetData(v1.JWT_NEW_ASSIGN_VALUE).(v1.DataParameter)
 
-	w := ctx.ResponseWriter
-	if nonce == "" || timestamp == 0 {
-		beego.Error("error")
-		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		w.WriteHeader(400)
-
-		results := map[string]interface{}{
-			"code":           400,
-			"message":        "error",
-			"responseObject": make(map[string]interface{}, 0),
-		}
-
-		response, _ := json.Marshal(results)
-
-		w.Write([]byte(response))
-		return
-	}
-
-	isUsed := models.IsUsedNonce(nonce)
-
-	if isUsed {
-		beego.Error("error")
-		beego.Error("Bad FilterNonce used")
-		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		w.WriteHeader(400)
-		results := map[string]interface{}{
-			"code":           400,
-			"message":        "error",
-			"responseObject": make(map[string]interface{}, 0),
-		}
-		response, _ := json.Marshal(results)
-		w.Write([]byte(response))
-
-	} else {
-
-		var expiryTime int64 = 60 * 60 * 12
-		now := time.Now().Unix()
-		expires := timestamp + expiryTime
-		if expires-now < 0 { // check expire
-			//expired
-			beego.Error("Bad FilterNonce timed out")
-			beego.Error("error")
+	if ok {
+		nonce := claims.Data.Nonce
+		timestamp := claims.Data.TimeStamp
+		w := ctx.ResponseWriter
+		if nonce == "" || timestamp == 0 {
 			w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-			w.WriteHeader(400)
+			w.WriteHeader(200)
 
 			results := map[string]interface{}{
 				"code":           400,
@@ -196,8 +182,50 @@ var FilterNonce = func(ctx *context.Context) {
 			response, _ := json.Marshal(results)
 
 			w.Write([]byte(response))
+			return
+		}
+
+		isUsed := models.IsUsedNonce(nonce)
+
+		if isUsed {
+
+			beego.Error("Bad FilterNonce used")
+			w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+			w.WriteHeader(200)
+
+			results := map[string]interface{}{
+				"code":           400,
+				"message":        "Duplicated Request!",
+				"responseObject": make(map[string]interface{}, 0),
+			}
+			response, _ := json.Marshal(results)
+
+			w.Write([]byte(response))
+
+		} else {
+
+			var expiryTime int64 = 60 * 60 * 12 *10000000
+			now := time.Now().Unix()
+			expires := timestamp + expiryTime
+			if expires-now < 0 { // check expire
+				//expired
+				beego.Error("Bad FilterNonce timed out")
+				w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+				w.WriteHeader(200)
+
+				results := map[string]interface{}{
+					"code":           400,
+					"message":        "Request timeout",
+					"responseObject": make(map[string]interface{}, 0),
+				}
+				response, _ := json.Marshal(results)
+
+				w.Write([]byte(response))
+			}
 		}
 	}
+
+	return
 
 }
 

@@ -30,6 +30,13 @@ type User struct {
 	LineId            string    `orm:"null;size(255)"`
 	BirthDate         time.Time `orm:"null;type(datetime)"`
 
+	FavoriteHouseSale    []*HouseSale    `orm:"rel(m2m)" json:"-"`
+	FavoriteHouseRent    []*HouseRent    `orm:"rel(m2m)" json:"-"`
+	FavoriteHouseProject []*HouseProject `orm:"rel(m2m)" json:"-"`
+	FavoriteOwnProject   []*OwnProject   `orm:"rel(m2m)" json:"-"`
+	FavoriteEntrepreneur []*Entrepreneur `orm:"rel(m2m)" json:"-"`
+	FavoriteAgent        []*Agent        `orm:"rel(m2m)" json:"-"`
+
 	Bronze               int    `orm:"null"`
 	Silver               int    `orm:"null"`
 	Gold                 int    `orm:"null"`

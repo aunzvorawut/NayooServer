@@ -12,7 +12,8 @@ import (
 
 type UsedNonce struct {
 	Id        int64  `orm:"auto;pk"`
-	Nonce     string `orm:"unique;size(255)"`
+	//Nonce     string `orm:"unique;size(255)"`
+	Nonce     string `orm:"size(255)"`
 	Timestamp int64
 }
 

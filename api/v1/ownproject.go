@@ -3,6 +3,8 @@ package v1
 import (
 	"gitlab.com/wisdomvast/NayooServer/models"
 	"math/rand"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 )
 
 type OwnProjectController struct {
@@ -56,6 +58,48 @@ func (this *OwnProjectController) List() {
 
 }
 
+func (this *OwnProjectController) ToggleFavorite(){
+
+	params := this.GlobalParamsJWT()
+
+	nonce := params.Nonce
+	timeStamp := params.TimeStamp
+
+	defer addUsedNonce(nonce,timeStamp)
+	accessToken := params.AccessToken
+	userObj := GetUserByToken(accessToken)
+
+	if userObj != nil {
+		ownProjectId := params.OwnProjectId
+
+		ownProjectObj, err := models.GetOwnProjectById(ownProjectId)
+		if err != nil || ownProjectObj == nil {
+			beego.Error("err != nil || ownProjectObj == nil")
+			this.ResponseJSON(nil , 401 , GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+			return
+		}
+
+		isFavorite, err := ToggleFavoriteOwnProject(userObj, ownProjectObj)
+		if err != nil {
+			beego.Error("isFavorite, err := ToggleFavoriteOwnProject(userObj, ownProjectObj)")
+			this.ResponseJSON(nil , 500 , GetStringByLanguage(SERVER_ERROR_TH,SERVER_ERROR_TH,SERVER_ERROR_ENG , params))
+			return
+
+		} else {
+			this.ResponseJSON(map[string]interface{}{
+				IS_FAVORITE:isFavorite,
+			} , 200 , GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG , params))
+			return
+		}
+
+	} else {
+		beego.Error("userObj != nil")
+		this.ResponseJSON(nil , 401 , GetStringByLanguage(LOGIN_FAIL_TH,LOGIN_FAIL_TH,LOGIN_FAIL_ENG , params))
+		return
+	}
+
+}
+
 func CreateOneOwnProjectContentMainView(ownProjectObj *models.OwnProject , params ValueParam) map[string]interface{} {
 	result := map[string]interface{}{
 		TITLE:            GetStringByLanguage(ownProjectObj.TitleTh, ownProjectObj.TitleTh, ownProjectObj.TitleEng , params),
@@ -68,4 +112,39 @@ func CreateOneOwnProjectContentMainView(ownProjectObj *models.OwnProject , param
 		LNG:              rand.Float64() + IntToFloat64(100),
 	}
 	return result
+}
+
+func ToggleFavoriteOwnProject(userObj *models.User, ownProjectObj *models.OwnProject) (bool, error) {
+	isFavorite := false
+	var err error
+	if userObj != nil && ownProjectObj != nil {
+		isFavorite = IsFavoriteOwnProject(userObj, ownProjectObj)
+		o := orm.NewOrm()
+		sqlStr := ""
+		if isFavorite {
+			sqlStr = "delete from user_own_projects where user_id =" + Int64ToString(userObj.Id) + " and own_project_id = " + Int64ToString(ownProjectObj.Id)
+			isFavorite = false
+		} else {
+			sqlStr = "insert ignore into user_own_projects (user_id, own_project_id) values(" + Int64ToString(userObj.Id) + ", " + Int64ToString(ownProjectObj.Id) + ")"
+			isFavorite = true
+		}
+		_, err = o.Raw(sqlStr).Exec()
+		if err != nil {
+			beego.Error(err)
+		}
+	}
+
+	return isFavorite, err
+}
+
+func IsFavoriteOwnProject(userObj *models.User, ownProjectObj *models.OwnProject) bool {
+	isFavorite := false
+	o := orm.NewOrm()
+	sqlStr := "select count(*) from user_own_projects where user_id =" + Int64ToString(userObj.Id) + " and own_project_id=" + Int64ToString(ownProjectObj.Id)
+	count := 0
+	o.Raw(sqlStr).QueryRow(&count)
+	if count > 0 {
+		isFavorite = true
+	}
+	return isFavorite
 }

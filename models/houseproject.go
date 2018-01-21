@@ -22,6 +22,9 @@ type HouseProject struct {
 
 	TitleTh         string `orm:"null;size(255)"`
 	TitleEng        string `orm:"null;size(255)"`
+
+	UserFavorites []*User   `orm:"reverse(many)"`
+
 }
 
 func init() {

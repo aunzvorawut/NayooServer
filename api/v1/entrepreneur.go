@@ -3,6 +3,8 @@ package v1
 import (
 	"gitlab.com/wisdomvast/NayooServer/models"
 	"math/rand"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 )
 
 type EntrepreneurController struct {
@@ -56,6 +58,48 @@ func (this *EntrepreneurController) List() {
 
 }
 
+func (this *EntrepreneurController) ToggleFavorite(){
+
+	params := this.GlobalParamsJWT()
+
+	nonce := params.Nonce
+	timeStamp := params.TimeStamp
+
+	defer addUsedNonce(nonce,timeStamp)
+	accessToken := params.AccessToken
+	userObj := GetUserByToken(accessToken)
+
+	if userObj != nil {
+		entrepreneurId := params.EntrepreneurId
+
+		entrepreneurObj, err := models.GetEntrepreneurById(entrepreneurId)
+		if err != nil || entrepreneurObj == nil {
+			beego.Error("err != nil || entrepreneurObj == nil")
+			this.ResponseJSON(nil , 401 , GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+			return
+		}
+
+		isFavorite, err := ToggleFavoriteEntrepreneur(userObj, entrepreneurObj)
+		if err != nil {
+			beego.Error("isFavorite, err := ToggleFavoriteEntrepreneur(userObj, entrepreneurObj)")
+			this.ResponseJSON(nil , 500 , GetStringByLanguage(SERVER_ERROR_TH,SERVER_ERROR_TH,SERVER_ERROR_ENG , params))
+			return
+
+		} else {
+			this.ResponseJSON(map[string]interface{}{
+				IS_FAVORITE:isFavorite,
+			} , 200 , GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG , params))
+			return
+		}
+
+	} else {
+		beego.Error("userObj != nil")
+		this.ResponseJSON(nil , 401 , GetStringByLanguage(LOGIN_FAIL_TH,LOGIN_FAIL_TH,LOGIN_FAIL_ENG , params))
+		return
+	}
+
+}
+
 func (this *EntrepreneurController) CreateOneEntrepreneurContentMainView(entrepreneurObj *models.Entrepreneur, params ValueParam) map[string]interface{} {
 	result := map[string]interface{}{
 		TITLE:                   GetStringByLanguage(entrepreneurObj.TitleTh, entrepreneurObj.TitleTh, entrepreneurObj.TitleEng, params),
@@ -98,4 +142,39 @@ func IsPromotionNaYooOnEntrepreneur(entrepreneurObj *models.Entrepreneur) bool {
 	default:
 		return false
 	}
+}
+
+func ToggleFavoriteEntrepreneur(userObj *models.User, entrepreneurObj *models.Entrepreneur) (bool, error) {
+	isFavorite := false
+	var err error
+	if userObj != nil && entrepreneurObj != nil {
+		isFavorite = IsFavoriteEntrepreneur(userObj, entrepreneurObj)
+		o := orm.NewOrm()
+		sqlStr := ""
+		if isFavorite {
+			sqlStr = "delete from user_entrepreneurs where user_id =" + Int64ToString(userObj.Id) + " and entrepreneur_id = " + Int64ToString(entrepreneurObj.Id)
+			isFavorite = false
+		} else {
+			sqlStr = "insert ignore into user_entrepreneurs (user_id, entrepreneur_id) values(" + Int64ToString(userObj.Id) + ", " + Int64ToString(entrepreneurObj.Id) + ")"
+			isFavorite = true
+		}
+		_, err = o.Raw(sqlStr).Exec()
+		if err != nil {
+			beego.Error(err)
+		}
+	}
+
+	return isFavorite, err
+}
+
+func IsFavoriteEntrepreneur(userObj *models.User, entrepreneurObj *models.Entrepreneur) bool {
+	isFavorite := false
+	o := orm.NewOrm()
+	sqlStr := "select count(*) from user_entrepreneurs where user_id =" + Int64ToString(userObj.Id) + " and entrepreneur_id=" + Int64ToString(entrepreneurObj.Id)
+	count := 0
+	o.Raw(sqlStr).QueryRow(&count)
+	if count > 0 {
+		isFavorite = true
+	}
+	return isFavorite
 }

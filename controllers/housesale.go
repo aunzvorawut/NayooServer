@@ -10,13 +10,13 @@ import (
 	"github.com/astaxie/beego"
 )
 
-//  HousesaleController operations for Housesale
-type HousesaleController struct {
+//  HouseSaleController operations for HouseSale
+type HouseSaleController struct {
 	beego.Controller
 }
 
 // URLMapping ...
-func (c *HousesaleController) URLMapping() {
+func (c *HouseSaleController) URLMapping() {
 	c.Mapping("Post", c.Post)
 	c.Mapping("GetOne", c.GetOne)
 	c.Mapping("GetAll", c.GetAll)
@@ -26,15 +26,15 @@ func (c *HousesaleController) URLMapping() {
 
 // Post ...
 // @Title Post
-// @Description create Housesale
-// @Param	body		body 	models.Housesale	true		"body for Housesale content"
-// @Success 201 {int} models.Housesale
+// @Description create HouseSale
+// @Param	body		body 	models.HouseSale	true		"body for HouseSale content"
+// @Success 201 {int} models.HouseSale
 // @Failure 403 body is empty
 // @router / [post]
-func (c *HousesaleController) Post() {
-	var v models.Housesale
+func (c *HouseSaleController) Post() {
+	var v models.HouseSale
 	json.Unmarshal(c.Ctx.Input.RequestBody, &v)
-	if _, err := models.AddHousesale(&v); err == nil {
+	if _, err := models.AddHouseSale(&v); err == nil {
 		c.Ctx.Output.SetStatus(201)
 		c.Data["json"] = v
 	} else {
@@ -45,15 +45,15 @@ func (c *HousesaleController) Post() {
 
 // GetOne ...
 // @Title Get One
-// @Description get Housesale by id
+// @Description get HouseSale by id
 // @Param	id		path 	string	true		"The key for staticblock"
-// @Success 200 {object} models.Housesale
+// @Success 200 {object} models.HouseSale
 // @Failure 403 :id is empty
 // @router /:id [get]
-func (c *HousesaleController) GetOne() {
+func (c *HouseSaleController) GetOne() {
 	idStr := c.Ctx.Input.Param(":id")
 	id, _ := strconv.ParseInt(idStr, 0, 64)
-	v, err := models.GetHousesaleById(id)
+	v, err := models.GetHouseSaleById(id)
 	if err != nil {
 		c.Data["json"] = err.Error()
 	} else {
@@ -64,17 +64,17 @@ func (c *HousesaleController) GetOne() {
 
 // GetAll ...
 // @Title Get All
-// @Description get Housesale
+// @Description get HouseSale
 // @Param	query	query	string	false	"Filter. e.g. col1:v1,col2:v2 ..."
 // @Param	fields	query	string	false	"Fields returned. e.g. col1,col2 ..."
 // @Param	sortby	query	string	false	"Sorted-by fields. e.g. col1,col2 ..."
 // @Param	order	query	string	false	"Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc ..."
 // @Param	limit	query	string	false	"Limit the size of result set. Must be an integer"
 // @Param	offset	query	string	false	"Start position of result set. Must be an integer"
-// @Success 200 {object} models.Housesale
+// @Success 200 {object} models.HouseSale
 // @Failure 403
 // @router / [get]
-func (c *HousesaleController) GetAll() {
+func (c *HouseSaleController) GetAll() {
 	var fields []string
 	var sortby []string
 	var order []string
@@ -116,7 +116,7 @@ func (c *HousesaleController) GetAll() {
 		}
 	}
 
-	l, err := models.GetAllHousesale(query, fields, sortby, order, offset, limit)
+	l, err := models.GetAllHouseSale(query, fields, sortby, order, offset, limit)
 	if err != nil {
 		c.Data["json"] = err.Error()
 	} else {
@@ -127,18 +127,18 @@ func (c *HousesaleController) GetAll() {
 
 // Put ...
 // @Title Put
-// @Description update the Housesale
+// @Description update the HouseSale
 // @Param	id		path 	string	true		"The id you want to update"
-// @Param	body		body 	models.Housesale	true		"body for Housesale content"
-// @Success 200 {object} models.Housesale
+// @Param	body		body 	models.HouseSale	true		"body for HouseSale content"
+// @Success 200 {object} models.HouseSale
 // @Failure 403 :id is not int
 // @router /:id [put]
-func (c *HousesaleController) Put() {
+func (c *HouseSaleController) Put() {
 	idStr := c.Ctx.Input.Param(":id")
 	id, _ := strconv.ParseInt(idStr, 0, 64)
-	v := models.Housesale{Id: id}
+	v := models.HouseSale{Id: id}
 	json.Unmarshal(c.Ctx.Input.RequestBody, &v)
-	if err := models.UpdateHousesaleById(&v); err == nil {
+	if err := models.UpdateHouseSaleById(&v); err == nil {
 		c.Data["json"] = "OK"
 	} else {
 		c.Data["json"] = err.Error()
@@ -148,15 +148,15 @@ func (c *HousesaleController) Put() {
 
 // Delete ...
 // @Title Delete
-// @Description delete the Housesale
+// @Description delete the HouseSale
 // @Param	id		path 	string	true		"The id you want to delete"
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
-func (c *HousesaleController) Delete() {
+func (c *HouseSaleController) Delete() {
 	idStr := c.Ctx.Input.Param(":id")
 	id, _ := strconv.ParseInt(idStr, 0, 64)
-	if err := models.DeleteHousesale(id); err == nil {
+	if err := models.DeleteHouseSale(id); err == nil {
 		c.Data["json"] = "OK"
 	} else {
 		c.Data["json"] = err.Error()

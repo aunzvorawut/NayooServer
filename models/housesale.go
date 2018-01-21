@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type Housesale struct {
+type HouseSale struct {
 	Id      int64     `orm:"pk;auto"`
 	Created time.Time `orm:"auto_now_add;type(datetime)"`
 	Updated time.Time `orm:"auto_now;type(datetime)"`
@@ -24,37 +24,39 @@ type Housesale struct {
 	TitleEng        string `orm:"null;size(255)"`
 	ResidentTypeTh  string `orm:"null;size(255)"` // ขาย,เช่า,ขาย/เช่า
 	ResidentTypeEng string `orm:"null;size(255)"` // sale,rent,sale/rent
+
+	UserFavorites []*User   `orm:"reverse(many)"`
 }
 
 func init() {
-	orm.RegisterModel(new(Housesale))
+	orm.RegisterModel(new(HouseSale))
 }
 
-// AddHousesale insert a new Housesale into database and returns
+// AddHouseSale insert a new HouseSale into database and returns
 // last inserted Id on success.
-func AddHousesale(m *Housesale) (id int64, err error) {
+func AddHouseSale(m *HouseSale) (id int64, err error) {
 	o := orm.NewOrm()
 	id, err = o.Insert(m)
 	return
 }
 
-// GetHousesaleById retrieves Housesale by Id. Returns error if
+// GetHouseSaleById retrieves HouseSale by Id. Returns error if
 // Id doesn't exist
-func GetHousesaleById(id int64) (v *Housesale, err error) {
+func GetHouseSaleById(id int64) (v *HouseSale, err error) {
 	o := orm.NewOrm()
-	v = &Housesale{Id: id}
-	if err = o.QueryTable(new(Housesale)).Filter("Id", id).RelatedSel().One(v); err == nil {
+	v = &HouseSale{Id: id}
+	if err = o.QueryTable(new(HouseSale)).Filter("Id", id).RelatedSel().One(v); err == nil {
 		return v, nil
 	}
 	return nil, err
 }
 
-// GetAllHousesale retrieves all Housesale matches certain condition. Returns empty list if
+// GetAllHouseSale retrieves all HouseSale matches certain condition. Returns empty list if
 // no records exist
-func GetAllHousesale(query map[string]string, fields []string, sortby []string, order []string,
+func GetAllHouseSale(query map[string]string, fields []string, sortby []string, order []string,
 	offset int64, limit int64) (ml []interface{}, err error) {
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(Housesale))
+	qs := o.QueryTable(new(HouseSale))
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
@@ -100,7 +102,7 @@ func GetAllHousesale(query map[string]string, fields []string, sortby []string, 
 		}
 	}
 
-	var l []Housesale
+	var l []HouseSale
 	qs = qs.OrderBy(sortFields...).RelatedSel()
 	if _, err = qs.Limit(limit, offset).All(&l, fields...); err == nil {
 		if len(fields) == 0 {
@@ -123,11 +125,11 @@ func GetAllHousesale(query map[string]string, fields []string, sortby []string, 
 	return nil, err
 }
 
-// UpdateHousesale updates Housesale by Id and returns error if
+// UpdateHouseSale updates HouseSale by Id and returns error if
 // the record to be updated doesn't exist
-func UpdateHousesaleById(m *Housesale) (err error) {
+func UpdateHouseSaleById(m *HouseSale) (err error) {
 	o := orm.NewOrm()
-	v := Housesale{Id: m.Id}
+	v := HouseSale{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
@@ -138,27 +140,27 @@ func UpdateHousesaleById(m *Housesale) (err error) {
 	return
 }
 
-// DeleteHousesale deletes Housesale by Id and returns error if
+// DeleteHouseSale deletes HouseSale by Id and returns error if
 // the record to be deleted doesn't exist
-func DeleteHousesale(id int64) (err error) {
+func DeleteHouseSale(id int64) (err error) {
 	o := orm.NewOrm()
-	v := Housesale{Id: id}
+	v := HouseSale{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
-		if num, err = o.Delete(&Housesale{Id: id}); err == nil {
+		if num, err = o.Delete(&HouseSale{Id: id}); err == nil {
 			fmt.Println("Number of records deleted in database:", num)
 		}
 	}
 	return
 }
 
-func GetAllHousesaleOnClientByEnabledAndStartAndExpired(max, offset int) (ml []*Housesale, count int64) {
+func GetAllHouseSaleOnClientByEnabledAndStartAndExpired(max, offset int) (ml []*HouseSale, count int64) {
 
 	currentTime := time.Now()
 
 	o := orm.NewOrm()
-	qs := o.QueryTable(new(Housesale))
+	qs := o.QueryTable(new(HouseSale))
 	qs.Filter("start", currentTime).Filter("expired__gt", currentTime).Filter("enabled", true).RelatedSel()
 	count, _ = qs.Count()
 

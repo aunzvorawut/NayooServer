@@ -104,27 +104,36 @@ type DataParameter struct {
 }
 
 type ValueParam struct {
-	Username        string     `json:"username"`
-	Password        string     `json:"password"`
-	PasswordConfirm string     `json:"password_confirm"`
-	FirstName       string     `json:"first_name"`
-	LastName        string     `json:"last_name"`
-	FullName        string     `json:"full_name"`
-	Birthdate       string     `json:"birthdate"`
-	TitleName       string     `json:"title_name"` // mr , ms , mrs
-	MobilePhone     string     `json:"mobile_phone"`
-	LineId          string     `json:"line_id"`
-	FacebookId      string     `json:"facebook_id"`
-	FacebookToken   string     `json:"facebook_token"`
-	Token           string     `json:"token"`
-	Nonce           string     `json:"nonce"`
-	TimeStamp       int64      `json:"timestamp"`
-	AccessToken     string     `json:"access_token"`
-	ResetToken      string     `json:"reset_token"`
-	LANGUAGE        string     `json:"language"`
-	Max             int64      `json:"max"`
-	Offset          int64      `json:"offset"`
-	JSON_PARAMS     JsonParams `json:"json_params"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	PasswordConfirm string `json:"password_confirm"`
+	FirstName       string `json:"first_name"`
+	LastName        string `json:"last_name"`
+	FullName        string `json:"full_name"`
+	Birthdate       string `json:"birthdate"`
+	TitleName       string `json:"title_name"` // mr , ms , mrs
+	MobilePhone     string `json:"mobile_phone"`
+	LineId          string `json:"line_id"`
+	FacebookId      string `json:"facebook_id"`
+	FacebookToken   string `json:"facebook_token"`
+	Token           string `json:"token"`
+	Nonce           string `json:"nonce"`
+	AccessToken     string `json:"access_token"`
+	ResetToken      string `json:"reset_token"`
+	LANGUAGE        string `json:"language"`
+
+	Max            int64 `json:"max"`
+	Offset         int64 `json:"offset"`
+	TimeStamp      int64 `json:"timestamp"`
+	HouseSaleId    int64 `json:"house_sale_id"`
+	HouseRentId    int64 `json:"house_rent_id"`
+	HouseProjectId int64 `json:"house_project_id"`
+	OwnProjectId   int64 `json:"own_project_id"`
+	AgentId        int64 `json:"agent_id"`
+	EntrepreneurId int64 `json:"entrepreneur_id"`
+	ProvinceId     int64 `json:"province_id"`
+
+	JSON_PARAMS JsonParams `json:"json_params"`
 }
 
 type JsonParams struct {

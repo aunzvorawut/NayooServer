@@ -2,25 +2,27 @@ package v1
 
 import (
 	"gitlab.com/wisdomvast/NayooServer/models"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 )
 
-type HouserentController struct {
+type HouseRentController struct {
 	GlobalApi
 }
 
-func (this *HouserentController) Main() {
+func (this *HouseRentController) Main() {
 
 }
 
-func (this *HouserentController) List() {
+func (this *HouseRentController) List() {
 
 	params := this.GlobalParamsJWT()
 
-	allHouserent, countAllHouserent := models.GetAllHouserentOnClientByEnabledAndStartAndExpired(-1, 0)
-	listHouserentResult := make([]map[string]interface{}, len(allHouserent))
-	for i, v := range allHouserent {
-		re := CreateOneHouserentContentMainView(v, params)
-		listHouserentResult[i] = re
+	allHouseRent, countAllHouseRent := models.GetAllHouseRentOnClientByEnabledAndStartAndExpired(-1, 0)
+	listHouseRentResult := make([]map[string]interface{}, len(allHouseRent))
+	for i, v := range allHouseRent {
+		re := CreateOneHouseRentContentMainView(v, params)
+		listHouseRentResult[i] = re
 	}
 
 	//allBannerSale := models.GetAllBannerByBannerTypeAndEnabledAndStartAndExpired(TYPE_SALE)
@@ -29,17 +31,17 @@ func (this *HouserentController) List() {
 	//	list_house_result[i] = re
 	//}
 
-	allRelateHouserent, countRelateHoursrent := models.GetAllHouserentOnClientByEnabledAndStartAndExpired(-1, 0)
-	listRelaterentResult := make([]map[string]interface{}, len(allRelateHouserent))
-	for i, v := range allRelateHouserent {
-		re := CreateOneHouserentContentRelateView(v, params)
+	allRelateHouseRent, countRelateHoursrent := models.GetAllHouseRentOnClientByEnabledAndStartAndExpired(-1, 0)
+	listRelaterentResult := make([]map[string]interface{}, len(allRelateHouseRent))
+	for i, v := range allRelateHouseRent {
+		re := CreateOneHouseRentContentRelateView(v, params)
 		listRelaterentResult[i] = re
 	}
 
 	result := map[string]interface{}{
 		LIST_POSTING_VIEW: map[string]interface{}{
-			COUNT_RESULT: Int64ToString(countAllHouserent),
-			LIST_RESULT:  listHouserentResult,
+			COUNT_RESULT: Int64ToString(countAllHouseRent),
+			LIST_RESULT:  listHouseRentResult,
 		},
 		LIST_BANNER_A_VIEW: CreateMockyBanner(1),
 		LIST_BANNER_B_VIEW: CreateMockyBanner(2),
@@ -55,7 +57,49 @@ func (this *HouserentController) List() {
 
 }
 
-func CreateOneHouserentContentMainView(houserentObj *models.Houserent, params ValueParam) map[string]interface{} {
+func (this *HouseRentController) ToggleFavorite(){
+
+	params := this.GlobalParamsJWT()
+
+	nonce := params.Nonce
+	timeStamp := params.TimeStamp
+
+	defer addUsedNonce(nonce,timeStamp)
+	accessToken := params.AccessToken
+	userObj := GetUserByToken(accessToken)
+
+	if userObj != nil {
+		houseRateId := params.HouseRentId
+
+		houseRentObj, err := models.GetHouseRentById(houseRateId)
+		if err != nil || houseRentObj == nil {
+			beego.Error("err != nil || houseRentObj == nil")
+			this.ResponseJSON(nil , 401 , GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+			return
+		}
+
+		isFavorite, err := ToggleFavoriteHouseRent(userObj, houseRentObj)
+		if err != nil {
+			beego.Error("isFavorite, err := ToggleFavoriteHouseRent(userObj, houseRentObj)")
+			this.ResponseJSON(nil , 500 , GetStringByLanguage(SERVER_ERROR_TH,SERVER_ERROR_TH,SERVER_ERROR_ENG , params))
+			return
+
+		} else {
+			this.ResponseJSON(map[string]interface{}{
+				IS_FAVORITE:isFavorite,
+			} , 200 , GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG , params))
+			return
+		}
+
+	} else {
+		beego.Error("userObj != nil")
+		this.ResponseJSON(nil , 401 , GetStringByLanguage(LOGIN_FAIL_TH,LOGIN_FAIL_TH,LOGIN_FAIL_ENG , params))
+		return
+	}
+
+}
+
+func CreateOneHouseRentContentMainView(houserentObj *models.HouseRent, params ValueParam) map[string]interface{} {
 	result := map[string]interface{}{
 		TITLE:                   GetStringByLanguage(houserentObj.TitleTh, houserentObj.TitleTh, houserentObj.TitleEng, params),
 		IMAGE:                   GetHostNayooName() + houserentObj.Image,
@@ -81,7 +125,7 @@ func CreateOneHouserentContentMainView(houserentObj *models.Houserent, params Va
 	return result
 }
 
-func CreateOneHouserentContentRelateView(houserentObj *models.Houserent, params ValueParam) map[string]interface{} {
+func CreateOneHouseRentContentRelateView(houserentObj *models.HouseRent, params ValueParam) map[string]interface{} {
 	result := map[string]interface{}{
 		TITLE:               GetStringByLanguage(houserentObj.TitleTh, houserentObj.TitleTh, houserentObj.TitleEng, params),
 		IMAGE:               GetHostNayooName(),
@@ -97,7 +141,7 @@ func CreateOneHouserentContentRelateView(houserentObj *models.Houserent, params 
 	return result
 }
 
-func IsPromotionNaYooOnHouseRent(houseRentObj *models.Houserent) bool {
+func IsPromotionNaYooOnHouseRent(houseRentObj *models.HouseRent) bool {
 	switch os := houseRentObj.Id % 2; os {
 	case 1:
 		return true
@@ -106,7 +150,7 @@ func IsPromotionNaYooOnHouseRent(houseRentObj *models.Houserent) bool {
 	}
 }
 
-func IsVideo360OnHouseRent(houseRentObj *models.Houserent) bool {
+func IsVideo360OnHouseRent(houseRentObj *models.HouseRent) bool {
 	switch os := houseRentObj.Id % 3; os {
 	case 0:
 		return false
@@ -115,4 +159,39 @@ func IsVideo360OnHouseRent(houseRentObj *models.Houserent) bool {
 	default:
 		return false
 	}
+}
+
+func ToggleFavoriteHouseRent(userObj *models.User, houseRentObj *models.HouseRent) (bool, error) {
+	isFavorite := false
+	var err error
+	if userObj != nil && houseRentObj != nil {
+		isFavorite = IsFavoriteHouseRent(userObj, houseRentObj)
+		o := orm.NewOrm()
+		sqlStr := ""
+		if isFavorite {
+			sqlStr = "delete from user_house_rents where user_id =" + Int64ToString(userObj.Id) + " and house_rent_id = " + Int64ToString(houseRentObj.Id)
+			isFavorite = false
+		} else {
+			sqlStr = "insert ignore into user_house_rents (user_id, house_rent_id) values(" + Int64ToString(userObj.Id) + ", " + Int64ToString(houseRentObj.Id) + ")"
+			isFavorite = true
+		}
+		_, err = o.Raw(sqlStr).Exec()
+		if err != nil {
+			beego.Error(err)
+		}
+	}
+
+	return isFavorite, err
+}
+
+func IsFavoriteHouseRent(userObj *models.User, houseRentObj *models.HouseRent) bool {
+	isFavorite := false
+	o := orm.NewOrm()
+	sqlStr := "select count(*) from user_house_rents where user_id =" + Int64ToString(userObj.Id) + " and house_rent_id=" + Int64ToString(houseRentObj.Id)
+	count := 0
+	o.Raw(sqlStr).QueryRow(&count)
+	if count > 0 {
+		isFavorite = true
+	}
+	return isFavorite
 }
