@@ -1,10 +1,10 @@
 package v1
 
 import (
-	"gitlab.com/wisdomvast/NayooServer/models"
-	"math/rand"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"gitlab.com/wisdomvast/NayooServer/models"
+	"math/rand"
 )
 
 type HouseProjectController struct {
@@ -100,14 +100,68 @@ func (this *HouseProjectController) List() {
 
 }
 
-func (this *HouseProjectController) ToggleFavorite(){
+func (this *HouseProjectController) TinyDetail() {
+
+	params := this.GlobalParamsJWT()
+	houseProjectId := params.HouseProjectId
+	houseProjectObj , _ := models.GetHouseProjectById(houseProjectId)
+	if houseProjectObj == nil{
+		this.ResponseJSON(nil,400,GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+		return
+	}
+
+	result := CreateOneHouseProjectContentRelateView(houseProjectObj,params)
+
+	this.ResponseJSON(result,200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
+	return
+
+}
+
+func (this *HouseProjectController) ListMap() {
+
+	params := this.GlobalParamsJWT()
+	origLat := params.LAT
+	origlng := params.LNG
+	radius := params.Radius
+
+	beego.Debug(origLat , origlng , radius)
+
+	result := make([]map[string]interface{},3)
+
+	re := map[string]interface{}{
+		ID : 1,
+		LAT : 13.732,
+		LNG : 100.569,
+	}
+	result[0] = re
+
+	re = map[string]interface{}{
+		ID : 2,
+		LAT : 13.742,
+		LNG : 100.579,
+	}
+	result[1] = re
+
+	re = map[string]interface{}{
+		ID : 3,
+		LAT : 13.752,
+		LNG : 100.589,
+	}
+	result[2] = re
+
+	this.ResponseJSON(result,200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
+	return
+
+}
+
+func (this *HouseProjectController) ToggleFavorite() {
 
 	params := this.GlobalParamsJWT()
 
 	nonce := params.Nonce
 	timeStamp := params.TimeStamp
 
-	defer addUsedNonce(nonce,timeStamp)
+	defer addUsedNonce(nonce, timeStamp)
 	accessToken := params.AccessToken
 	userObj := GetUserByToken(accessToken)
 
@@ -117,26 +171,26 @@ func (this *HouseProjectController) ToggleFavorite(){
 		houseProjectObj, err := models.GetHouseProjectById(houseProjectId)
 		if err != nil || houseProjectObj == nil {
 			beego.Error("err != nil || houseProjectObj == nil")
-			this.ResponseJSON(nil , 401 , GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+			this.ResponseJSON(nil, 401, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG, params))
 			return
 		}
 
 		isFavorite, err := ToggleFavoriteHouseProject(userObj, houseProjectObj)
 		if err != nil {
 			beego.Error("isFavorite, err := ToggleFavoriteHouseProject(userObj, houseProjectObj)")
-			this.ResponseJSON(nil , 500 , GetStringByLanguage(SERVER_ERROR_TH,SERVER_ERROR_TH,SERVER_ERROR_ENG , params))
+			this.ResponseJSON(nil, 500, GetStringByLanguage(SERVER_ERROR_TH, SERVER_ERROR_TH, SERVER_ERROR_ENG, params))
 			return
 
 		} else {
 			this.ResponseJSON(map[string]interface{}{
-				IS_FAVORITE:isFavorite,
-			} , 200 , GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG , params))
+				IS_FAVORITE: isFavorite,
+			}, 200, GetStringByLanguage(SUCCESS_TH, SUCCESS_TH, SUCCESS_ENG, params))
 			return
 		}
 
 	} else {
 		beego.Error("userObj != nil")
-		this.ResponseJSON(nil , 401 , GetStringByLanguage(LOGIN_FAIL_TH,LOGIN_FAIL_TH,LOGIN_FAIL_ENG , params))
+		this.ResponseJSON(nil, 401, GetStringByLanguage(LOGIN_FAIL_TH, LOGIN_FAIL_TH, LOGIN_FAIL_ENG, params))
 		return
 	}
 

@@ -14,6 +14,11 @@ type DebugController struct {
 
 func (this *DebugController) Main() {
 
+	//SELECT 3956 * 2 * ASIN(SQRT( POWER(SIN((13.732 - 15.732) *  pi()/180 / 2), 2) +COS(13.732 * pi()/180) * COS(15.732 * pi()/180) * POWER(SIN((100.569 -105.569) * pi()/180 / 2), 2) )) as distance
+	//from agent
+
+	beego.Debug(Distance( 13.732 , 100.569 , 15.732 , 105.569  ))
+
 	//testGoogleMap()
 
 	// ===== request =====

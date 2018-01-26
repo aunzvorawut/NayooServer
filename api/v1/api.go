@@ -103,7 +103,7 @@ func GetUserByToken(accessToken string) *models.User {
 
 func SendRegisterMail(username, token, typeStr string) {
 	clientUrl := beego.AppConfig.String("client_register_url")
-	urlToken := clientUrl + "/user/verify?token=" + token
+	urlToken := clientUrl + "?token=" + token
 	emailTpl := strings.Replace(emailTemplate, "$url", urlToken, 1)
 	subj := "Nayoo Registration Email"
 	if typeStr == "resetpassword" {
@@ -328,40 +328,6 @@ func GetSafeName(input string) string {
 //=========== LIB CONTENT JSON DOWN HERE =================
 //=========== LIB CONTENT JSON DOWN HERE =================
 
-func (this *GlobalApi) GenerateUserDetailJson(userObj *models.User) interface{} {
-
-	//CTX.ResponseJSON()
-	imageProfile := ""
-	if facebookId := userObj.FacebookId; facebookId != "" {
-		imageProfile = "https://graph.facebook.com/" + facebookId + "/picture?type=large"
-	} else {
-		imageProfile = beego.AppConfig.String("hostname") + beego.AppConfig.String("proxyPath") + userObj.Image
-	}
-
-	result := map[string]interface{}{
-		"username":        userObj.Username,
-		"isagent":         userObj.IsAgent,
-		"userimage":       imageProfile,
-		"agentimage":      userObj.AgentImage,
-		"email":           userObj.Email,
-		"bronze":          userObj.Bronze,
-		"silver":          userObj.Silver,
-		"gold":            userObj.Gold,
-		"firstname":       userObj.FirstName,
-		"lastname":        userObj.LastName,
-		"mobileNumber":    userObj.MobileNumber,
-		"phoneNumber":     userObj.PhoneNumber,
-		"address":         userObj.Address,
-		"province":        userObj.Province,
-		"subdistinct":     userObj.SubDistrict,
-		"distinct":        userObj.District,
-		"saleContentList": []interface{}{},
-		"workSheetList":   []interface{}{},
-	}
-
-	return result
-
-}
 
 func CreateMockyBanner(size int) []map[string]interface{} {
 
@@ -455,4 +421,25 @@ func CreateMockyResidentType(id int64) []map[string]interface{} {
 
 func GetHostNayooName() string {
 	return beego.AppConfig.String("nayooServerName")
+}
+
+func hsin(theta float64) float64 {
+	return math.Pow(math.Sin(theta/2), 2)
+}
+
+func Distance(lat1, lon1, lat2, lon2 float64) float64 {
+	// convert to radians
+	// must cast radius as float to multiply later
+	var la1, lo1, la2, lo2, r float64
+	la1 = lat1 * math.Pi / 180
+	lo1 = lon1 * math.Pi / 180
+	la2 = lat2 * math.Pi / 180
+	lo2 = lon2 * math.Pi / 180
+
+	r = 6378100 // Earth radius in METERS
+
+	// calculate
+	h := hsin(la2-la1) + math.Cos(la1)*math.Cos(la2)*hsin(lo2-lo1)
+
+	return 2 * r * math.Asin(math.Sqrt(h))
 }

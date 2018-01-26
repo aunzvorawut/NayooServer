@@ -46,6 +46,7 @@ const (
 	TITLE                   string = "title"
 	DESCRIPTION             string = "description"
 	PRICE                   string = "price"
+	FULL_NAME               string = "full_name"
 	IMAGE                   string = "image"
 	IMAGES                  string = "images"
 	VIP_TYPE                string = "vip_type"
@@ -121,6 +122,9 @@ type ValueParam struct {
 	AccessToken     string `json:"access_token"`
 	ResetToken      string `json:"reset_token"`
 	LANGUAGE        string `json:"language"`
+	LAT             string `json:"lat"`
+	LNG             string `json:"lng"`
+	Radius          string `json:"radius"`
 
 	Max            int64 `json:"max"`
 	Offset         int64 `json:"offset"`
