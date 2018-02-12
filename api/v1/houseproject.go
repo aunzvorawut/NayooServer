@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"gitlab.com/wisdomvast/NayooServer/models"
 	"math/rand"
+	"strconv"
 )
 
 type HouseProjectController struct {
@@ -117,6 +118,44 @@ func (this *HouseProjectController) TinyDetail() {
 
 }
 
+func (this *HouseProjectController) MockListMap() {
+	params := this.GlobalParamsJWT()
+	vipTypes := [8]string{"silver", "gold", "standard", "bronze", "silver", "gold", "standard", "bronze"}
+	for i:= 0; i<=100; i++ {
+		vipType := vipTypes[i%4]
+		lat := rand.Float64() + IntToFloat64(16)
+		lng := rand.Float64() + IntToFloat64(102)
+		house := models.HouseProject{
+			Enabled: true,
+			VipType: vipType,
+			Image:  "static/img/default_home.jpg",
+			TitleTh:  "สินธาราบ้านโจด",
+			TitleEng:  "",
+			Lat: lat,
+			Lng: lng,
+			Location: "POINT(" + strconv.FormatFloat(lat, 'f', 14, 64) + " " + strconv.FormatFloat(lng, 'f', 14, 64) + ")",
+		}
+		_, err := models.AddHouseProject(&house)
+		if err != nil {
+			beego.Error(err)
+		}
+	}
+	this.ResponseJSON(nil,200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
+	return
+}
+
+func (this *HouseProjectController) TonListMap() {
+	params := this.GlobalParamsJWT()
+	origLat := 16.60466028797962
+	origlng := 102.94050908804502
+	radius := 20
+
+	results := models.GetHouseProjectNearByLocation(origLat, origlng, radius)
+	this.ResponseJSON(map[string]interface{}{
+		THIS_DATA: results,
+	}, 200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
+}
+
 func (this *HouseProjectController) ListMap() {
 
 	params := this.GlobalParamsJWT()
@@ -213,8 +252,8 @@ func CreateOneHouseProjectContentMainView(HouseProjectObj *models.HouseProject, 
 		IS_PROMOTON_NAYOO:   IsPromotionNaYooOnHouseProject(HouseProjectObj),
 		IS_GURU:             IsGuruOnHouseProject(HouseProjectObj),
 		VIP_TYPE:            HouseProjectObj.VipType,
-		LAT:                 rand.Float64() + IntToFloat64(13),
-		LNG:                 rand.Float64() + IntToFloat64(100),
+		LAT:                 rand.Float64() + IntToFloat64(16),
+		LNG:                 rand.Float64() + IntToFloat64(102),
 	}
 	return result
 }
@@ -229,8 +268,8 @@ func CreateOneHouseProjectContentRelateView(HouseProjectObj *models.HouseProject
 		IS_GURU:             IsGuruOnHouseProject(HouseProjectObj),
 		RESIDENT_ADDRESS:    "ต.บ้านเป็ด อ.เมืองขแนแก่น จ.ขอนแก่น",
 		PROJECT_BRAND_IMAGE: GetHostNayooName() + HouseProjectObj.Image,
-		LAT:                 rand.Float64() + IntToFloat64(13),
-		LNG:                 rand.Float64() + IntToFloat64(100),
+		LAT:                 rand.Float64() + IntToFloat64(16),
+		LNG:                 rand.Float64() + IntToFloat64(102),
 	}
 	return result
 }

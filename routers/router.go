@@ -90,6 +90,8 @@ func init() {
 
 	nsDebug := beego.NewNamespace("/debug",
 		beego.NSRouter("/", &v1.DebugController{}, "get,post:Main"),
+		beego.NSRouter("/mockListMap", &v1.HouseProjectController{}, "get:MockListMap"),
+		beego.NSRouter("/tonListMap", &v1.HouseProjectController{}, "get:TonListMap"),
 	)
 
 	beego.AddNamespace(nsDebug)
