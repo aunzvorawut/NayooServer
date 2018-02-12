@@ -152,7 +152,7 @@ func (this *HouseProjectController) TonListMap() {
 
 	results := models.GetHouseProjectNearByLocation(origLat, origlng, radius)
 	this.ResponseJSON(map[string]interface{}{
-		THIS_DATA: results,
+		"s": results,
 	}, 200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
 }
 

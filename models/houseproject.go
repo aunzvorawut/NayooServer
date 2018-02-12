@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"time"
 	"strconv"
+	"github.com/astaxie/beego"
 )
 
 type HouseProject struct {
@@ -174,11 +175,19 @@ func GetAllHouseProjectOnClientByEnabledAndStartAndExpired(max, offset int) (ml 
 
 }
 //SELECT g FROM geom WHERE ST_Distance(ST_GeomFromText(g),ST_GeomFromText('POINT(16.60466028797962 102.94050908804502)')) < 1
-func GetHouseProjectNearByLocation(lat float64, lng float64, r int) (houseProject interface{}) {
+func GetHouseProjectNearByLocation(lat float64, lng float64, r int) (houseProjectId []int64) {
 	Lat := strconv.FormatFloat(lat, 'f', 14, 64)
 	Lng := strconv.FormatFloat(lng, 'f', 14, 64)
 	R := strconv.Itoa(r)
 	o := orm.NewOrm()
-	houseProject = o.Raw("SELECT * FROM house_project WHERE ST_Distance(ST_GeomFromText(location),ST_GeomFromText('POINT(" + Lat + " " + Lng + ")')) < " + R + ";")
-	return houseProject
+
+	str := "SELECT id FROM house_project WHERE ST_Distance(ST_GeomFromText(location),ST_GeomFromText('POINT(" + Lat + " " + Lng + ")')) < " + R + ";"
+
+	countRow,err := o.Raw(str).QueryRows(&houseProjectId)
+
+	beego.Debug("String query = ",str)
+	beego.Debug(countRow)
+	beego.Debug(err)
+
+	return houseProjectId
 }
