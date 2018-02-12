@@ -43,6 +43,7 @@ func init() {
 
 			beego.NSNamespace("/houserent",
 				beego.NSRouter("/list", &v1.HouseRentController{}, "get,post:List"),
+				beego.NSRouter("/main", &v1.HouseRentController{}, "get,post:Main"),
 				beego.NSNamespace("/actions",
 					beego.NSBefore(FilterNonce),
 					beego.NSRouter("/toggleFavorite", &v1.HouseRentController{}, "get,post:ToggleFavorite"),

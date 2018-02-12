@@ -35,7 +35,9 @@ func (this *UserController) Register() {
 	nonce := params.Nonce
 	timestamp := params.TimeStamp
 
-	if fullName == "" || username == "" || password == "" || password2 == "" || TitleName == "" || MobilePhone == "" || LineID == "" || birthDate == "" {
+	beego.Debug(LineID)
+
+	if fullName == "" || username == "" || password == "" || password2 == "" || TitleName == "" || MobilePhone == "" || birthDate == "" {
 		beego.Error("error")
 		this.ResponseJSON(nil, 400, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG, params))
 		return

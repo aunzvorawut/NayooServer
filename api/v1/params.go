@@ -41,10 +41,13 @@ const (
 
 	//-------------------  keyjson  ------------------
 
-	ID string = "id"
-
+	ID                      string = "id"
+	LABEL                   string = "label"
+	VALIE                   string = "value"
 	TITLE                   string = "title"
+	FILTER                  string = "filter"
 	DESCRIPTION             string = "description"
+	DATE                    string = "DATE"
 	PRICE                   string = "price"
 	FULL_NAME               string = "full_name"
 	IMAGE                   string = "image"
@@ -75,6 +78,8 @@ const (
 	LIST_RECOMMEND_VIEW     string = "list_recommend_view"
 	LIST_VIDEO_VIEW         string = "list_video_view"
 	LIST_REVIEW_VIEW        string = "list_review_view"
+	LIST_NEARBY_VIEW        string = "list_nearby_view"
+	LIST_ARTICLE_VIEW       string = "list_article_view"
 	LIST_POSTING_VIEW       string = "list_posting_view"
 	LIST_RELATE_VIEW        string = "list_relate_view"
 	LIST_BANNER_A_VIEW      string = "list_banner_a_view"
@@ -282,7 +287,8 @@ func IsJwtTokenValid(data string) (*jwt.Token, bool) {
 
 	beego.Debug(err)
 
-	if (err == nil || err.Error() == "Token used before issued") && token.Valid {
+	if (err == nil && token.Valid) || err.Error() == "Token used before issued" {
+		beego.Debug(token)
 		return token, true
 	} else {
 		return nil, false

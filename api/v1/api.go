@@ -37,6 +37,10 @@ const (
 	TYPE_PROJECT      = "type_project"
 	TYPE_ENTERPRENEUR = "type_enterpreneur"
 	TYPE_AGENT        = "type_agent"
+
+
+	DEFAULT_HOME = "default_home.jpg"
+	DEFAULT_LOGO = "default_banner.png"
 )
 
 const emailTemplate = `Verify your email to start using Nayoo / กรุณายืนยัน  Email ของคุณ,<br/>
@@ -336,7 +340,7 @@ func CreateMockyBanner(size int) []map[string]interface{} {
 	for i := 1; i <= size; i++ {
 		re := map[string]interface{}{
 			ID:    i,
-			IMAGE: GetHostNayooName() + "static/img/default_banner.png",
+			IMAGE: GetHostNayooName() + "static/img/"+DEFAULT_HOME,
 		}
 
 		result[i-1] = re
@@ -363,6 +367,21 @@ func CreateMockyVideoList(size int) []map[string]interface{}{
 		result[i] = map[string]interface{}{
 			ID:i+1,
 			VIDEO_LINK:"http://techslides.com/demos/sample-videos/small.mp4",
+		}
+	}
+	return result
+
+}
+
+func CreateMockyArticle(size int) []map[string]interface{}{
+	result := make([]map[string]interface{} , size)
+	for i := 0 ; i< size ; i++{
+		result[i] = map[string]interface{}{
+			ID:i+1,
+			IMAGE: GetHostNayooName() + "static/img/"+DEFAULT_HOME,
+			TITLE: "lorem title",
+			DESCRIPTION : "lorem description",
+			DATE : "12 กันยายน 2560",
 		}
 	}
 	return result

@@ -224,7 +224,7 @@ func CreateOneHouseProjectContentRelateView(HouseProjectObj *models.HouseProject
 		TITLE:               GetStringByLanguage(HouseProjectObj.TitleTh, HouseProjectObj.TitleTh, HouseProjectObj.TitleEng, params),
 		DESCRIPTION:         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
 		SALE_STR:            "เริ่มที่ 2.6 ล้านบาท",
-		IMAGE:               GetHostNayooName(),
+		IMAGE:               GetHostNayooName()+HouseProjectObj.Image,
 		IS_PROMOTON_NAYOO:   IsPromotionNaYooOnHouseProject(HouseProjectObj),
 		IS_GURU:             IsGuruOnHouseProject(HouseProjectObj),
 		RESIDENT_ADDRESS:    "ต.บ้านเป็ด อ.เมืองขแนแก่น จ.ขอนแก่น",

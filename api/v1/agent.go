@@ -49,7 +49,7 @@ func (this *AgentController) List() {
 		LIST_BANNER_C_VIEW: CreateMockyBanner(2),
 		LIST_RELATE_VIEW: map[string]interface{}{
 			COUNT_RESULT: Int64ToString(countRelateHouseProject),
-			LIST_RESULT:  allRelateHouseProject,
+			LIST_RESULT:  listRelateHouseProjectResult,
 		},
 		PARAMS: params,
 	}

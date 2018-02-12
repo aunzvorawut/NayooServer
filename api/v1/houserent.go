@@ -1,9 +1,9 @@
 package v1
 
 import (
-	"gitlab.com/wisdomvast/NayooServer/models"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"gitlab.com/wisdomvast/NayooServer/models"
 )
 
 type HouseRentController struct {
@@ -11,6 +11,63 @@ type HouseRentController struct {
 }
 
 func (this *HouseRentController) Main() {
+
+	params := this.GlobalParamsJWT()
+
+	allRelateHouseRent, countRelateHouserent := models.GetAllHouseRentOnClientByEnabledAndStartAndExpired(-1, 0)
+	listRelaterentResult := make([]map[string]interface{}, len(allRelateHouseRent))
+	for i, v := range allRelateHouseRent {
+		re := CreateOneHouseRentContentRelateView(v, params)
+		listRelaterentResult[i] = re
+	}
+
+	result := map[string]interface{}{
+
+		LIST_RECOMMEND_VIEW: map[string]interface{}{
+			TITLE:        "ที่พักแนะนำ",
+			COUNT_RESULT: Int64ToString(countRelateHouserent),
+			LIST_RESULT:  listRelaterentResult,
+		},
+		LIST_POSTING_VIEW: map[string]interface{}{
+			TITLE:        "รายการที่พัก",
+			COUNT_RESULT: Int64ToString(countRelateHouserent),
+			LIST_RESULT:  listRelaterentResult,
+		},
+		LIST_NEARBY_VIEW: map[string]interface{}{
+			TITLE: "ที่พักใกล้สภานศึกษา",
+			FILTER: []map[string]interface{}{
+				map[string]interface{}{
+					LABEL: "location",
+					VALIE: "มหาวิทยาลัยขอนแก่น",
+				},
+				map[string]interface{}{
+					LABEL: "location",
+					VALIE: "สถาบันการบินพลเรือน",
+				},
+				map[string]interface{}{
+					LABEL: "location",
+					VALIE: "มหาวิทยาลัยราชภัฏขอนแก่น",
+				},
+				map[string]interface{}{
+					LABEL: "location",
+					VALIE: "มหาวิทยาลัยราชภัฏศรีปทุม",
+				},
+			},
+			COUNT_RESULT: Int64ToString(countRelateHouserent),
+			LIST_RESULT:  listRelaterentResult,
+		},
+		LIST_ARTICLE_VIEW: map[string]interface{}{
+			TITLE:        "บทความ",
+			COUNT_RESULT: 5,
+			LIST_RESULT:  CreateMockyArticle(5),
+		},
+		LIST_BANNER_A_VIEW: CreateMockyBanner(1),
+		LIST_BANNER_B_VIEW: CreateMockyBanner(2),
+		LIST_BANNER_C_VIEW: CreateMockyBanner(2),
+	}
+
+	this.ResponseJSON(result, 200, "success")
+	return
 
 }
 
@@ -57,14 +114,14 @@ func (this *HouseRentController) List() {
 
 }
 
-func (this *HouseRentController) ToggleFavorite(){
+func (this *HouseRentController) ToggleFavorite() {
 
 	params := this.GlobalParamsJWT()
 
 	nonce := params.Nonce
 	timeStamp := params.TimeStamp
 
-	defer addUsedNonce(nonce,timeStamp)
+	defer addUsedNonce(nonce, timeStamp)
 	accessToken := params.AccessToken
 	userObj := GetUserByToken(accessToken)
 
@@ -74,26 +131,26 @@ func (this *HouseRentController) ToggleFavorite(){
 		houseRentObj, err := models.GetHouseRentById(houseRateId)
 		if err != nil || houseRentObj == nil {
 			beego.Error("err != nil || houseRentObj == nil")
-			this.ResponseJSON(nil , 401 , GetStringByLanguage(BAD_REQUEST_TH,BAD_REQUEST_TH,BAD_REQUEST_ENG,params))
+			this.ResponseJSON(nil, 401, GetStringByLanguage(BAD_REQUEST_TH, BAD_REQUEST_TH, BAD_REQUEST_ENG, params))
 			return
 		}
 
 		isFavorite, err := ToggleFavoriteHouseRent(userObj, houseRentObj)
 		if err != nil {
 			beego.Error("isFavorite, err := ToggleFavoriteHouseRent(userObj, houseRentObj)")
-			this.ResponseJSON(nil , 500 , GetStringByLanguage(SERVER_ERROR_TH,SERVER_ERROR_TH,SERVER_ERROR_ENG , params))
+			this.ResponseJSON(nil, 500, GetStringByLanguage(SERVER_ERROR_TH, SERVER_ERROR_TH, SERVER_ERROR_ENG, params))
 			return
 
 		} else {
 			this.ResponseJSON(map[string]interface{}{
-				IS_FAVORITE:isFavorite,
-			} , 200 , GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG , params))
+				IS_FAVORITE: isFavorite,
+			}, 200, GetStringByLanguage(SUCCESS_TH, SUCCESS_TH, SUCCESS_ENG, params))
 			return
 		}
 
 	} else {
 		beego.Error("userObj != nil")
-		this.ResponseJSON(nil , 401 , GetStringByLanguage(LOGIN_FAIL_TH,LOGIN_FAIL_TH,LOGIN_FAIL_ENG , params))
+		this.ResponseJSON(nil, 401, GetStringByLanguage(LOGIN_FAIL_TH, LOGIN_FAIL_TH, LOGIN_FAIL_ENG, params))
 		return
 	}
 
