@@ -148,11 +148,12 @@ func (this *HouseProjectController) TonListMap() {
 	params := this.GlobalParamsJWT()
 	origLat := 16.60466028797962
 	origlng := 102.94050908804502
-	radius := 20
+	radius := 0.02
 
-	results := models.GetHouseProjectNearByLocation(origLat, origlng, radius)
+	results, count := models.GetHouseProjectNearByLocation(origLat, origlng, radius)
 	this.ResponseJSON(map[string]interface{}{
-		"s": results,
+		"data": results,
+		"count": count,
 	}, 200,GetStringByLanguage(SUCCESS_TH,SUCCESS_TH,SUCCESS_ENG,params))
 }
 
